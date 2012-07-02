@@ -55,16 +55,12 @@
 #ifndef __RIMEADDR_H__
 #define __RIMEADDR_H__
 
-#include "contiki-conf.h"
+#include "contiki_conf.h"
 
-#ifdef RIMEADDR_CONF_SIZE
-#define RIMEADDR_SIZE RIMEADDR_CONF_SIZE
-#else /* RIMEADDR_SIZE */
-#define RIMEADDR_SIZE 2
-#endif /* RIMEADDR_SIZE */
+//#include "mac.h"
 
 typedef union {
-  unsigned char u8[RIMEADDR_SIZE];
+  unsigned char u8[8];
 } rimeaddr_t;
 
 
@@ -126,6 +122,11 @@ extern rimeaddr_t rimeaddr_node_addr;
  *
  */
 extern const rimeaddr_t rimeaddr_null;
+
+//ADDED ALE
+extern const rimeaddr_t rimeaddr_broadcast;
+
+extern uint8_t mac_addr_size;
 
 #endif /* __RIMEADDR_H__ */
 /** @} */

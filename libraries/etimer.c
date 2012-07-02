@@ -45,15 +45,20 @@
  * $Id: etimer.c,v 1.3 2007/10/07 19:59:27 joxe Exp $
  */
 
-#include "contiki-conf.h"
+#include "contiki_conf.h"
 
-#include "sys/etimer.h"
-#include "sys/process.h"
+#include "etimer.h"
+
+#define DEBUG DEBUG_NONE
+#include "uip_debug.h"
 
 static struct etimer *timerlist;
 static clock_time_t next_expiration;
 
-PROCESS(etimer_process, "Event timer");
+static void etimer_cb_null (int param1, void * param2){
+  //NOTHING, IT IS USED ONLY LIKE A NULL CALLBACK
+}
+
 /*---------------------------------------------------------------------------*/
 static void
 update_time(void)
@@ -78,86 +83,42 @@ update_time(void)
   }
 }
 /*---------------------------------------------------------------------------*/
-PROCESS_THREAD(etimer_process, ev, data)
+void etimer_poll() //ADDED ALE
 {
   struct etimer *t, *u;
-	
-  PROCESS_BEGIN();
-
-  timerlist = NULL;
-  
-  while(1) {
-    PROCESS_YIELD();
-
-    if(ev == PROCESS_EVENT_EXITED) {
-      struct process *p = data;
-
-      while(timerlist != NULL && timerlist->p == p) {
-	timerlist = timerlist->next;
-      }
-
-      if(timerlist != NULL) {
-	t = timerlist;
-	while(t->next != NULL) {
-	  if(t->next->p == p) {
-	    t->next = t->next->next;
-	  } else
-	    t = t->next;
-	}
-      }
-      continue;
-    } else if(ev != PROCESS_EVENT_POLL) {
-      continue;
-    }
-
-  again:
-    
-    u = NULL;
-    
-    for(t = timerlist; t != NULL; t = t->next) {
+  PRINTF("ETIMER POLL");
+  /*--------- ADDED ALE ---------------*/
+  u = NULL;
+  for(t = timerlist; t != NULL; t = t->next) {
       if(timer_expired(&t->timer)) {
-	if(process_post(t->p, PROCESS_EVENT_TIMER, t) == PROCESS_ERR_OK) {
-	  
-	  /* Reset the process ID of the event timer, to signal that the
-	     etimer has expired. This is later checked in the
-	     etimer_expired() function. */
-	  t->p = PROCESS_NONE;
-	  if(u != NULL) {
-	    u->next = t->next;
-	  } else {
-	    timerlist = t->next;
-	  }
-	  t->next = NULL;
-	  update_time();
-	  goto again;
-	} else {
-	  etimer_request_poll();
-	}
+          PRINTF("ETIMER EXPIRED");
+          if (u != NULL) {
+              u->next = t->next;
+          } else {
+              timerlist = t->next;
+          }
+          PRINTF("ETIMER UPDATE");
+          update_time();
+          PRINTF("ETIMER RUN OR NOT");
+          if (t->p != NULL){
+            PRINTF("ETIMER RUN");
+            t->p(EVENT_TIMER, t);
+          }
       }
       u = t;
-    }
-    
   }
-  
-  PROCESS_END();
+  /*---------- ADDED ALE END ------------*/
 }
-/*---------------------------------------------------------------------------*/
-void
-etimer_request_poll(void)
-{
-  process_poll(&etimer_process);
-}
+
 /*---------------------------------------------------------------------------*/
 static void
 add_timer(struct etimer *timer)
 {
   struct etimer *t;
 
-  etimer_request_poll();
-
   if(timer->p != PROCESS_NONE) {
     /* Timer not on list. */
-    
+    PRINTF("ETIMER ADDING");
     for(t = timerlist; t != NULL; t = t->next) {
       if(t == timer) {
 	/* Timer already on list, bail out. */
@@ -167,20 +128,28 @@ add_timer(struct etimer *timer)
     }
   }
 
-  timer->p = PROCESS_CURRENT();
   timer->next = timerlist;
   timerlist = timer;
-
+  
   update_time();
+  
 }
-/*---------------------------------------------------------------------------*/
+/*-----------------------ADDED ALE------------------------------*/
 void
-etimer_set(struct etimer *et, clock_time_t interval)
+etimer_set(struct etimer *et, etimer_cb cb, clock_time_t interval)
 {
+  PRINTF("ETIMER SET");
+  et->next = NULL;
   timer_set(&et->timer, interval);
+  if (cb != NULL){
+    PRINTF("ETIMER SET CALLBACK");
+    et->p = cb;
+  }else{
+    et->p = etimer_cb_null;
+  }  
   add_timer(et);
 }
-/*---------------------------------------------------------------------------*/
+/*-----------------------ADDED ALE END-------------------------*/
 void
 etimer_reset(struct etimer *et)
 {
@@ -205,7 +174,7 @@ etimer_adjust(struct etimer *et, int timediff)
 int
 etimer_expired(struct etimer *et)
 {
-  return et->p == PROCESS_NONE;
+  return timer_expired(&et->timer); //ADDED ALE
 }
 /*---------------------------------------------------------------------------*/
 clock_time_t

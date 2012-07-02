@@ -38,11 +38,11 @@
  *         Adam Dunkels <adam@sics.se>
  */
 
-#include "contiki-conf.h"
+#include "contiki_conf.h"
 
-extern uint16_t uip_slen;
+extern u16_t uip_slen;
 
-#include "net/uip-udp-packet.h"
+#include "uip_udp_packet.h"
 
 #include <string.h>
 
@@ -81,7 +81,7 @@ uip_udp_packet_sendto(struct uip_udp_conn *c, const void *data, int len,
     uip_ipaddr_copy(&curaddr, &c->ripaddr);
     curport = c->rport;
 
-    /* Load new IP addr/port */
+    /* Load  new IP addr/port */
     uip_ipaddr_copy(&c->ripaddr, toaddr);
     c->rport = toport;
 

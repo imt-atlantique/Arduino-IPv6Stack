@@ -53,7 +53,7 @@
 #ifndef SIMPLE_UDP_H
 #define SIMPLE_UDP_H
 
-#include "net/uip.h"
+#include "uip.h"
 
 struct simple_udp_connection;
 
@@ -87,6 +87,8 @@ int simple_udp_sendto(struct simple_udp_connection *c,
                       const uip_ipaddr_t *to);
 
 void simple_udp_init(void);
+
+void simple_udp_poll(struct simple_udp_connection *c);
 
 #endif /* SIMPLE_UDP_H */
 

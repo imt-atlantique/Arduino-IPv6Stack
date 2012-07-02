@@ -34,13 +34,12 @@
  */
 
 #include <string.h>
+#include "uip_split.h"
+#include "uip.h"
+#include "uip_fw.h"
+#include "uip_arch.h"
 
-#include "net/uip-split.h"
-#include "net/uip.h"
-#include "net/uip-fw.h"
-#include "net/uip_arch.h"
-
-#include "net/tcpip.h"
+#include "tcpip.h"
 
 #define BUF ((struct uip_tcpip_hdr *)&uip_buf[UIP_LLH_LEN])
 
@@ -49,7 +48,7 @@ void
 uip_split_output(void)
 {
 #if UIP_TCP
-  uint16_t tcplen, len1, len2;
+  u16_t tcplen, len1, len2;
 
   /* We only try to split maximum sized TCP segments. */
   if(BUF->proto == UIP_PROTO_TCP &&
@@ -111,7 +110,7 @@ uip_split_output(void)
 #endif /* UIP_CONF_IPV6 */
     
     /*    uip_appdata += len1;*/
-    memcpy(uip_appdata, (uint8_t *)uip_appdata + len1, len2);
+    memcpy(uip_appdata, (u8_t *)uip_appdata + len1, len2);
 
     uip_add32(BUF->seqno, len1);
     BUF->seqno[0] = uip_acc32[0];

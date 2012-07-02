@@ -72,7 +72,7 @@
 #define UIP_BIG_ENDIAN     1234
 #endif /* UIP_BIG_ENDIAN */
 
-#include "contiki-conf.h"
+#include "contiki_conf.h"
 
 /*------------------------------------------------------------------------------*/
 
@@ -186,7 +186,7 @@
 
 #ifndef UIP_CONF_IPV6
 /** Do we use IPv6 or not (default: no) */
-#define UIP_CONF_IPV6                 0
+#define UIP_CONF_IPV6                 1
 #endif
 
 #ifndef UIP_CONF_IPV6_QUEUE_PKT
@@ -194,12 +194,12 @@
 #define UIP_CONF_IPV6_QUEUE_PKT       0
 #endif
 
-#ifndef UIP_CONF_IPV6_CHECKS
+#ifndef UIP_CONF_IPV6_CHECKS 
 /** Do we do IPv6 consistency checks (highly recommended, default: yes) */
 #define UIP_CONF_IPV6_CHECKS          1
 #endif
 
-#ifndef UIP_CONF_IPV6_REASSEMBLY
+#ifndef UIP_CONF_IPV6_REASSEMBLY 
 /** Do we do IPv6 fragmentation (default: no) */
 #define UIP_CONF_IPV6_REASSEMBLY      0
 #endif
@@ -209,19 +209,19 @@
 #define UIP_CONF_NETIF_MAX_ADDRESSES  3
 #endif
 
-#ifndef UIP_CONF_DS6_PREFIX_NBU
+#ifndef UIP_CONF_ND6_MAX_PREFIXES 
 /** Default number of IPv6 prefixes associated to the node's interface */
-#define UIP_CONF_DS6_PREFIX_NBU     2
+#define UIP_CONF_ND6_MAX_PREFIXES     3
 #endif
 
-#ifndef UIP_CONF_DS6_NBR_NBU
+#ifndef UIP_CONF_ND6_MAX_NEIGHBORS 
 /** Default number of neighbors that can be stored in the %neighbor cache */
-#define UIP_CONF_DS6_NBR_NBU    4
+#define UIP_CONF_ND6_MAX_NEIGHBORS    4  
 #endif
 
-#ifndef UIP_CONF_DS6_DEFRT_NBU
+#ifndef UIP_CONF_ND6_MAX_DEFROUTERS
 /** Minimum number of default routers */
-#define UIP_CONF_DS6_DEFRT_NBU       2
+#define UIP_CONF_ND6_MAX_DEFROUTERS   2
 #endif
 /** @} */
 
@@ -244,7 +244,7 @@
 #ifdef UIP_CONF_UDP
 #define UIP_UDP UIP_CONF_UDP
 #else /* UIP_CONF_UDP */
-#define UIP_UDP           1
+#define UIP_UDP           0
 #endif /* UIP_CONF_UDP */
 
 /**
@@ -308,7 +308,7 @@
  * \hideinitializer
  */
 #ifndef UIP_CONF_ACTIVE_OPEN
-#define UIP_ACTIVE_OPEN 1
+#define UIP_ACTIVE_OPEN 0
 #else /* UIP_CONF_ACTIVE_OPEN */
 #define UIP_ACTIVE_OPEN (UIP_CONF_ACTIVE_OPEN)
 #endif /* UIP_CONF_ACTIVE_OPEN */
@@ -495,6 +495,7 @@
 #define SICSLOWPAN_CONF_FRAG  0
 #endif
 
+
 /** @} */
 
 /*------------------------------------------------------------------------------*/
@@ -644,8 +645,8 @@ void uip_log(char *msg);
  #define UIP_APPCALL     httpd_appcall
 
  struct httpd_state {
- uint8_t state;
- uint16_t count;
+ u8_t state;
+ u16_t count;
  char *dataptr;
  char *script;
  };
@@ -677,6 +678,8 @@ void uip_log(char *msg);
  * application state information.
  */
 /** @} */
+
+#define RPL_CONF_DAO_ACK 1 //ADDED ALE
 
 #endif /* __UIPOPT_H__ */
 /** @} */

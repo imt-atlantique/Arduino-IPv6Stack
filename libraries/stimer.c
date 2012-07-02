@@ -45,9 +45,9 @@
  * $Id: stimer.c,v 1.3 2010/03/15 15:53:57 joxe Exp $
  */
 
-#include "contiki-conf.h"
-#include "sys/clock.h"
-#include "sys/stimer.h"
+#include "contiki_conf.h"
+#include "clock.h"
+#include "stimer.h"
 
 #define SCLOCK_GEQ(a, b)	((unsigned long)((a) - (b)) < \
 				((unsigned long)(~((unsigned long)0)) >> 1))

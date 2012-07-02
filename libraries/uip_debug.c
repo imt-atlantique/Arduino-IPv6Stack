@@ -37,12 +37,13 @@
  *         Joakim Eriksson <joakime@sics.se>
  */
 
-#include "net/uip-debug.h"
+#include "uip_debug.h"
 
 /*---------------------------------------------------------------------------*/
 void
 uip_debug_ipaddr_print(const uip_ipaddr_t *addr)
 {
+  /*
 #if UIP_CONF_IPV6
   uint16_t a;
   unsigned int i;
@@ -62,20 +63,26 @@ uip_debug_ipaddr_print(const uip_ipaddr_t *addr)
       PRINTA("%x", a);
     }
   }
-#else /* UIP_CONF_IPV6 */
+#else 
   PRINTA("%u.%u.%u.%u", addr->u8[0], addr->u8[1], addr->u8[2], addr->u8[3]);
-#endif /* UIP_CONF_IPV6 */
+#endif 
+*/
+  arduino_debug_address(addr);
 }
 /*---------------------------------------------------------------------------*/
 void
 uip_debug_lladdr_print(const uip_lladdr_t *addr)
 {
+  /*
   unsigned int i;
   for(i = 0; i < sizeof(uip_lladdr_t); i++) {
     if(i > 0) {
       PRINTA(":");
     }
     PRINTA("%02x", addr->addr[i]);
+    
   }
+  */
+  arduino_debug_lladdr(addr);
 }
 /*---------------------------------------------------------------------------*/

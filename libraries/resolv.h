@@ -40,7 +40,7 @@
 #ifndef __RESOLV_H__
 #define __RESOLV_H__
 
-#include "contiki.h"
+#include "contiki_conf.h"
 
 /**
  * Event that is broadcasted when a DNS name has been resolved.
@@ -53,6 +53,5 @@ CCIF uip_ipaddr_t *resolv_getserver(void);
 CCIF uip_ipaddr_t *resolv_lookup(const char *name);
 CCIF void resolv_query(const char *name);
 
-PROCESS_NAME(resolv_process);
 
 #endif /* __RESOLV_H__ */

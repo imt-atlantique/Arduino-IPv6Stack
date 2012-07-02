@@ -42,7 +42,7 @@
 #ifndef UIP_DEBUG_H
 #define UIP_DEBUG_H
 
-#include "net/uip.h"
+#include "uip.h"
 #include <stdio.h>
 
 void uip_debug_ipaddr_print(const uip_ipaddr_t *addr);
@@ -72,15 +72,15 @@ void uip_debug_lladdr_print(const uip_lladdr_t *addr);
 #endif /* (DEBUG) & DEBUG_ANNOTATE */
 
 #if (DEBUG) & DEBUG_PRINT
-#ifdef __AVR__
-#define PRINTF(FORMAT,args...) printf_P(PSTR(FORMAT),##args)
-#else
-#define PRINTF(...) printf(__VA_ARGS__)
-#endif
+#define PRINTF(m) arduino_debug(m)
+#define PRINTF_DEC(m) arduino_debug_dec(m)
+#define PRINTF_HEX(m) arduino_debug_hex(m)
 #define PRINT6ADDR(addr) uip_debug_ipaddr_print(addr)
 #define PRINTLLADDR(lladdr) uip_debug_lladdr_print(lladdr)
 #else
 #define PRINTF(...)
+#define PRINTF_DEC(m) 
+#define PRINTF_HEX(m) 
 #define PRINT6ADDR(addr)
 #define PRINTLLADDR(lladdr)
 #endif /* (DEBUG) & DEBUG_PRINT */

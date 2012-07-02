@@ -63,8 +63,7 @@
 #ifndef __ETIMER_H__
 #define __ETIMER_H__
 
-#include "sys/timer.h"
-#include "sys/process.h"
+#include "timer.h"
 
 /**
  * A timer.
@@ -74,10 +73,14 @@
  *
  * \hideinitializer
  */
+ 
+typedef void (*etimer_cb) (int, void *); //ADDED ALE
+#define EVENT_TIMER 0xff //ADDED ALE
+ 
 struct etimer {
   struct timer timer;
   struct etimer *next;
-  struct process *p;
+  etimer_cb p; //ADDED ALE
 };
 
 /**
@@ -96,7 +99,8 @@ struct etimer {
  *             process that called the etimer_set() function.
  *
  */
-CCIF void etimer_set(struct etimer *et, clock_time_t interval);
+//CCIF void etimer_set(struct etimer *et, clock_time_t interval);
+CCIF void etimer_set(struct etimer *et, etimer_cb cb, clock_time_t interval); // ADDED ALE
 
 /**
  * \brief      Reset an event timer with the same interval as was
@@ -236,7 +240,7 @@ clock_time_t etimer_next_expiration_time(void);
 
 /** @} */
 
-PROCESS_NAME(etimer_process);
+void etimer_poll(); //ADDED ALE
 #endif /* __ETIMER_H__ */
 /** @} */
 /** @} */

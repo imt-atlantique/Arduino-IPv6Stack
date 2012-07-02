@@ -41,7 +41,7 @@
 #ifndef __UIP_UDP_PACKET_H__
 #define __UIP_UDP_PACKET_H__
 
-#include "net/uip.h"
+#include "uip.h"
 
 void uip_udp_packet_send(struct uip_udp_conn *c, const void *data, int len);
 void uip_udp_packet_sendto(struct uip_udp_conn *c, const void *data, int len,

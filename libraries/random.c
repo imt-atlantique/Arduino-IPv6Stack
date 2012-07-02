@@ -31,17 +31,14 @@
  * @(#)$Id: random.c,v 1.5 2010/12/13 16:52:02 dak664 Exp $
  */
 
-
-#include "lib/random.h"
-#include "sys/clock.h"
-
-#include <stdlib.h>
+#include "random.h"
+#include "clock.h"
 
 /*---------------------------------------------------------------------------*/
 void
 random_init(unsigned short seed)
 {
-  srand(seed);
+  randomSeed(analogRead(0));
 }
 /*---------------------------------------------------------------------------*/
 unsigned short
@@ -50,6 +47,6 @@ random_rand(void)
 /* In gcc int rand() uses RAND_MAX and long random() uses RANDOM_MAX=0x7FFFFFFF */
 /* RAND_MAX varies depending on the architecture */
 
-  return (unsigned short)rand();
+  return random(0, RANDOM_RAND_MAX);
 }
 /*---------------------------------------------------------------------------*/

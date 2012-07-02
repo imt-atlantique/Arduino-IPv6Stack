@@ -43,7 +43,8 @@
 #ifndef __UIPLIB_H__
 #define __UIPLIB_H__
 
-#include "net/uip.h"
+#include "uip.h"
+
 
 /**
  * \addtogroup uipconvfunc

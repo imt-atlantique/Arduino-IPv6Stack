@@ -45,9 +45,9 @@
  * $Id: timer.c,v 1.8 2010/06/21 19:07:24 joxe Exp $
  */
 
-#include "contiki-conf.h"
-#include "sys/clock.h"
-#include "sys/timer.h"
+#include "contiki_conf.h"
+#include "clock.h"
+#include "timer.h"
 
 /*---------------------------------------------------------------------------*/
 /**

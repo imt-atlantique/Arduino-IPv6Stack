@@ -43,24 +43,18 @@
  *         Adam Dunkels <adam@sics.se>
  */
 
-#include "net/rime/rimeaddr.h"
+#include "rimeaddr.h"
 
 rimeaddr_t rimeaddr_node_addr;
-#if RIMEADDR_SIZE == 2
-const rimeaddr_t rimeaddr_null = { { 0, 0 } };
-#else /*RIMEADDR_SIZE == 2*/
-#if RIMEADDR_SIZE == 8
 const rimeaddr_t rimeaddr_null = { { 0, 0, 0, 0, 0, 0, 0, 0 } };
-#endif /*RIMEADDR_SIZE == 8*/
-#endif /*RIMEADDR_SIZE == 2*/
 
+const rimeaddr_t rimeaddr_broadcast = { { 0xFF, 0xFF } };
 
-/*---------------------------------------------------------------------------*/
 void
 rimeaddr_copy(rimeaddr_t *dest, const rimeaddr_t *src)
 {
-  uint8_t i;
-  for(i = 0; i < RIMEADDR_SIZE; i++) {
+  u8_t i;
+  for(i = 0; i < mac_addr_size; i++) {
     dest->u8[i] = src->u8[i];
   }
 }
@@ -68,8 +62,8 @@ rimeaddr_copy(rimeaddr_t *dest, const rimeaddr_t *src)
 int
 rimeaddr_cmp(const rimeaddr_t *addr1, const rimeaddr_t *addr2)
 {
-  uint8_t i;
-  for(i = 0; i < RIMEADDR_SIZE; i++) {
+  u8_t i;
+  for(i = 0; i < mac_addr_size; i++) {
     if(addr1->u8[i] != addr2->u8[i]) {
       return 0;
     }
@@ -82,5 +76,4 @@ rimeaddr_set_node_addr(rimeaddr_t *t)
 {
   rimeaddr_copy(&rimeaddr_node_addr, t);
 }
-/*---------------------------------------------------------------------------*/
 /** @} */

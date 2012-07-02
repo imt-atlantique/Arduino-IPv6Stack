@@ -1,3 +1,6 @@
+#ifndef SICSLOWPAN_H_
+#define SICSLOWPAN_H_
+
 /**
  * \addtogroup sicslowpan
  * @{
@@ -46,10 +49,12 @@
  * \author Julien Abeille <jabeille@cisco.com>
  */
 
-#ifndef __SICSLOWPAN_H__
-#define __SICSLOWPAN_H__
-#include "net/uip.h"
-#include "net/mac/mac.h"
+
+#include "contiki_conf.h"
+#include "rimeaddr.h"
+#include "uip.h"
+#include "packetbuf.h"
+
 
 /**
  * \name General sicslowpan defines
@@ -61,16 +66,9 @@
 #define SICSLOWPAN_UDP_8_BIT_PORT_MIN                     0xF000
 #define SICSLOWPAN_UDP_8_BIT_PORT_MAX                     0xF0FF   /* F000 + 255 */
 
-/** @} */
-
-/**
- * \name 6lowpan compressions
- * @{
- */
-#define SICSLOWPAN_COMPRESSION_IPV6        0
-#define SICSLOWPAN_COMPRESSION_HC1         1
-#define SICSLOWPAN_COMPRESSION_HC06        2
-/** @} */
+#define SICSLOWPAN_CONF_COMPRESSION_IPV6        0
+#define SICSLOWPAN_CONF_COMPRESSION_HC1         1
+#define SICSLOWPAN_CONF_COMPRESSION_HC06        2
 
 /**
  * \name 6lowpan dispatches
@@ -183,9 +181,9 @@
  * offset field is just not used
  */
 /* struct sicslowpan_frag_hdr { */
-/*   uint16_t dispatch_size; */
-/*   uint16_t tag; */
-/*   uint8_t offset; */
+/*   u16_t dispatch_size; */
+/*   u16_t tag; */
+/*   u8_t offset; */
 /* }; */
 
 /**
@@ -197,21 +195,21 @@
  * structure
  */
 /* struct sicslowpan_hc1_hdr { */
-/*   uint8_t dispatch; */
-/*   uint8_t encoding; */
-/*   uint8_t ttl; */
+/*   u8_t dispatch; */
+/*   u8_t encoding; */
+/*   u8_t ttl; */
 /* }; */
 
 /**
  * \brief HC1 followed by HC_UDP
  */
 /* struct sicslowpan_hc1_hc_udp_hdr { */
-/*   uint8_t dispatch; */
-/*   uint8_t hc1_encoding; */
-/*   uint8_t hc_udp_encoding; */
-/*   uint8_t ttl; */
-/*   uint8_t ports; */
-/*   uint16_t udpchksum; */
+/*   u8_t dispatch; */
+/*   u8_t hc1_encoding; */
+/*   u8_t hc_udp_encoding; */
+/*   u8_t ttl; */
+/*   u8_t ports; */
+/*   u16_t udpchksum; */
 /* }; */
 
 /**
@@ -219,9 +217,9 @@
  * each context can have upto 8 bytes
  */
 struct sicslowpan_addr_context {
-  uint8_t used; /* possibly use as prefix-length */
-  uint8_t number;
-  uint8_t prefix[8];
+  u8_t used; /* possibly use as prefix-length */
+  u8_t number;
+  u8_t prefix[8];
 };
 
 /**
@@ -248,7 +246,7 @@ struct sicslowpan_addr_context {
  * compressed multicast address is known. It is true
  * if the 9-bit group is the all nodes or all routers
  * group.
- * \param a is typed uint8_t *
+ * \param a is typed u8_t *
  */
 #define sicslowpan_is_mcast_addr_decompressable(a) \
    (((*a & 0x01) == 0) &&                           \
@@ -300,26 +298,17 @@ struct sicslowpan_addr_context {
 
 /** @} */
 
-/**
- * The structure of a next header compressor.
- *
- * TODO: needs more parameters when compressing extension headers, etc.
- */
-struct sicslowpan_nh_compressor {
-  int (* is_compressable)(uint8_t next_header);
+void sicslowpan_init(u8_t (* f)(uip_lladdr_t *));
 
-  /** compress next header (TCP/UDP, etc) - ptr points to next header to
-      compress */
-  int (* compress)(uint8_t *compressed, uint8_t *uncompressed_len);
+void input(uip_lladdr_t *uip_lladdr_source, uip_lladdr_t *uip_lladdr_destination);
 
-  /** uncompress next header (TCP/UDP, etc) - ptr points to next header to
-      uncompress */
-  int (* uncompress)(uint8_t *compressed, uint8_t *lowpanbuf, uint8_t *uncompressed_len);
+// mac_addr_size: Size (in bytes) of the link layer (MAC) destination mac address (2 or 8 bytes) which will receive the frame that we want to send.
+extern uint8_t mac_addr_size;
 
-};
+extern u8_t (* mac_outputfunc)(uip_lladdr_t *a);
 
-
-extern const struct network_driver sicslowpan_driver;
-
-#endif /* __SICSLOWPAN_H__ */
-/** @} */
+//link layer addresses used to send and receive packets
+extern uip_lladdr_t ll_src_addr;
+extern uip_lladdr_t ll_dst_addr;
+		
+#endif /*SICSLOWPAN_H_*/

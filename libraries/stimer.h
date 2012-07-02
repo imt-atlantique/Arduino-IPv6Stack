@@ -69,7 +69,7 @@
 #ifndef __STIMER_H__
 #define __STIMER_H__
 
-#include "sys/clock.h"
+#include "clock.h"
 
 /**
  * A timer.

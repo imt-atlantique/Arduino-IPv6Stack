@@ -52,7 +52,7 @@
 #ifndef __UIP_ARP_H__
 #define __UIP_ARP_H__
 
-#include "net/uip.h"
+#include "uip.h"
 
 
 CCIF extern struct uip_eth_addr uip_ethaddr;
@@ -63,7 +63,7 @@ CCIF extern struct uip_eth_addr uip_ethaddr;
 struct uip_eth_hdr {
   struct uip_eth_addr dest;
   struct uip_eth_addr src;
-  uint16_t type;
+  u16_t type;
 };
 
 #define UIP_ETHTYPE_ARP  0x0806
