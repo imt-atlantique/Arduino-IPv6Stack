@@ -43,8 +43,9 @@
 
 #define UDP_PORT 8765
 
-#define SEND_INTERVAL		(10 * CLOCK_SECOND)
+#define SEND_INTERVAL		(10 * 1000)// 10 seconds
 
+//This function calculates the RAM memory left
 int mem(){
   uint8_t * heapptr, * stackptr;
   stackptr = (uint8_t *)malloc(4);
@@ -54,20 +55,25 @@ int mem(){
   return stackptr - heapptr;
 }
 
+//We need a specific object to implement the MACLayer interface (the virtual methods). In this case we use XBee but could be anyone capable of implementing that interface
 MACLayer* macLayer = new XBeeMACLayer();
 
-#define UDP_MAX_DATA_LEN 200
-
+//We use a buffer in order to put the data that we will send
+#define UDP_MAX_DATA_LEN 100
 char udp_send[UDP_MAX_DATA_LEN];
 
+//This will be the destination IP address
 IPv6Address addr_dest;
 
 #if UIP_CONF_ROUTER
+  //If we are configured to be a router, this is our prefix. Up to now we hardcode it here. Note: The aaaa::/64 prefix is the only known by the 6loPAN context so it will achieve a better compression.
   IPv6Address prefix(0xaa, 0xaa, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 #endif
 
+//We use a timer in order to send data if we do not have to respond to a message received.
 IPv6Timer send_timer;
 
+//changes the /64 prefix of the given address to the value of the prefix that was given to us by a router (if any). Returns true if we have an address with a prefix like this and false if we did not get a prefix and thus a global address
 bool change_addr_prefix(IPv6Address &address){
   IPv6Address globalAddress;
   if (IPv6Stack::getGlobalPreferredAddress(globalAddress)){//we get our global address' prefix, given by our router, to send the response to the sender using global addresses (this will allow us to see routing)
@@ -80,9 +86,11 @@ bool change_addr_prefix(IPv6Address &address){
   return false;
 }
 
+//This is what we will run as a result of receiving a UDP message. We first use the serial port to show what we received, wait half of the sending time and send the response to the sender that is, actually, the same message inverted
 void udp_callback(char *data, int datalen, int sender_port, IPv6Address &sender_addr){  
-  Serial.println(mem());
-  delay(100);
+  //Serial.println(mem());
+  //delay(100);
+  //Show received dada
   data[datalen] = 0;
   Serial.println();
   Serial.println();
@@ -91,26 +99,28 @@ void udp_callback(char *data, int datalen, int sender_port, IPv6Address &sender_
   Serial.print(" port: ");
   Serial.print(sender_port);
   Serial.print(", data: ");
-  //Serial.println(data);
+  //Serial.println(data); //could do it this way too, but we try the other way just to test
+  //Show data
   while (IPv6Stack::udpDataAvailable()){
      Serial.print(IPv6Stack::readUdpData());
   }
   Serial.println();
   
-  delay(SEND_INTERVAL/2);//take SEND_INTERVAL/2 to resend
-    
+  delay(SEND_INTERVAL/2);//take SEND_INTERVAL/2 to respond
+  
   Serial.println("Sending response..");
   Serial.println(); 
   delay(50); 
   int j;
+  //Invert the message
   for(j=0; j<datalen; ++j){
     udp_send[datalen-1-j] = data[j]; 
   }
+  //In case we have been given a prefix by a router and we have validated our global address, change the address of the sender by changing its prefix. It is related to the same router, messages will go through it
   change_addr_prefix(sender_addr);
   addr_dest = sender_addr; //now if our message is not responded, it will be resent from the main loop to the same destination
   IPv6Stack::udp_send(sender_addr, udp_send, datalen);
-  delay(50);
-  send_timer.restart();//each time we receive something we reset this timer so we should not send in the main loop as long as our message is responded
+  send_timer.restart();//each time we receive something we rstart this timer so we should not send in the main loop as long as our message is responded
 }
 
 void setup(){  
@@ -127,10 +137,10 @@ void setup(){
   }
   IPv6Stack::init_ipStack();  
   Serial.println("IPV6 INITIALIZED");
-  delay(500);
+  delay(100);
   IPv6Stack::init_udp(UDP_PORT, UDP_PORT);
   Serial.println("UDP INITIALIZED");
-  delay(500);
+  delay(100);
   
   #if !UIP_CONF_ROUTER
       send_timer.set(SEND_INTERVAL);
@@ -150,6 +160,7 @@ int udp_data_length = 0;
 IPv6Address sender_address;
 
 void loop(){
+  //Always need to poll timers in order to make the IPv6 Stack work
   IPv6Stack::poll_timers();  
 #if !UIP_CONF_ROUTER
   if (send_timer.expired()){
@@ -160,9 +171,11 @@ void loop(){
       IPv6Stack::udp_send(addr_dest, "0123456789", 10);
   }
 #endif
+  //We always check if we got anything. If we did, process that with the IPv6 Stack
   if (IPv6Stack::receive_packet()){
       IPv6Stack::process_ipStack();  
 #if !UIP_CONF_ROUTER
+      //If we are not configured as router, check if udp data is available and run the callback with it
       if (IPv6Stack::udpDataAvailable()){
         udp_data_length = IPv6Stack::getUdpDataLength();
         IPv6Stack::getUdpData(udp_data);
