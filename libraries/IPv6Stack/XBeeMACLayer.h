@@ -8,7 +8,7 @@
 
 class XBeeMACLayer: public MACLayer{
     private:
-      XBee* xbee;
+      XBee xbee;
       uip_lladdr_t my_mac;
       
       bool sendAtCommand(uint8_t& mac_position);

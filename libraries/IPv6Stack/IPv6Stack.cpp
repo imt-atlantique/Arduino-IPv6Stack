@@ -25,7 +25,7 @@ const uip_ipaddr_t* IPv6Stack::sender_addr;
 uint16_t IPv6Stack::sender_port;
 
 
-bool IPv6Stack::init_macLayer(MACLayer* macLayer){
+bool IPv6Stack::initMacLayer(MACLayer* macLayer){
   IPv6Stack::mac = macLayer;
   return IPv6Stack::mac->init();
 }
@@ -35,7 +35,7 @@ uint8_t IPv6Stack::mac_output(uip_lladdr_t *lladdr_destination) {
   return 0;
 }
 
-void IPv6Stack::init_ipStack() {
+void IPv6Stack::initIpStack() {
     uint8_t addr_pos;
     #if ARDUINO_DEBUG
     arduino_debug_init();
@@ -67,15 +67,15 @@ IPv6Stack::receiver(struct simple_udp_connection *c,
    IPv6Stack::sender_port = sender_port;
 }
 
-void IPv6Stack::init_udp(uint16_t local_port, uint16_t remote_port) {
+void IPv6Stack::initUdp(uint16_t local_port, uint16_t remote_port) {
   simple_udp_register(&broadcast_connection, local_port, NULL, remote_port, IPv6Stack::receiver);
 }
 
-void IPv6Stack::udp_send(const IPv6Address &to, const void *data, uint16_t datalen){
+void IPv6Stack::udpSend(const IPv6Address &to, const void *data, uint16_t datalen){
   simple_udp_sendto(&broadcast_connection, data, datalen, &to.address); 
 }
 
-bool IPv6Stack::receive_packet() {       
+bool IPv6Stack::receivePacket() {       
   if (IPv6Stack::mac->receive(ll_src_addr, ll_dst_addr, uip_6lp_buf.u8, uip_6lp_len)){  
     //now decompress
     input(&ll_src_addr, &ll_dst_addr);
@@ -85,23 +85,22 @@ bool IPv6Stack::receive_packet() {
 }
  
 
-void IPv6Stack::process_ipStack() {
+void IPv6Stack::processIpStack() {
     return tcpip_input();
 }    
 
-void IPv6Stack::poll_timers() {
+void IPv6Stack::pollTimers() {
     IPv6Stack::udp_data_length = 0;
     IPv6Stack::udp_data_length_left = 0;
     etimer_poll();
-    //ctimer_poll();    
 }
 
-void IPv6Stack::add_address(IPv6Address &address){
+void IPv6Stack::addAddress(IPv6Address &address){
   uip_ds6_addr_add(&address.address, 0, ADDR_AUTOCONF);
 }
 
 #if UIP_CONF_ROUTER
-void IPv6Stack::set_prefix(IPv6Address &prefix, uint8_t prefix_length)
+void IPv6Stack::setPrefix(IPv6Address &prefix, uint8_t prefix_length)
 {  
     uip_ipaddr_t ipaddr;
     memcpy(&ipaddr, &prefix.address, 16);
