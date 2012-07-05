@@ -67,11 +67,13 @@ IPv6Stack::receiver(struct simple_udp_connection *c,
    IPv6Stack::sender_port = sender_port;
 }
 
-void IPv6Stack::initUdp(uint16_t local_port, uint16_t remote_port) {
-  simple_udp_register(&broadcast_connection, local_port, NULL, remote_port, IPv6Stack::receiver);
+void IPv6Stack::initUdp(uint16_t local_port) {
+  simple_udp_register(&broadcast_connection, local_port, NULL, 0, IPv6Stack::receiver);
 }
 
-void IPv6Stack::udpSend(const IPv6Address &to, const void *data, uint16_t datalen){
+void IPv6Stack::udpSend(const IPv6Address &to, uint16_t remote_port, const void *data, uint16_t datalen){
+	broadcast_connection.remote_port = remote_port;
+	broadcast_connection.udp_conn->rport = UIP_HTONS(remote_port);
   simple_udp_sendto(&broadcast_connection, data, datalen, &to.address); 
 }
 

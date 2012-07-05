@@ -34,10 +34,10 @@ class IPv6Stack
     static bool initMacLayer(MACLayer* macLayer);
 	//Initializes the variables of the IPv6 Stack (Second function to call in setup)
     static void initIpStack();
-	//Initializes the UDP connection to a remote port, listening ing the local port
-    static void initUdp(uint16_t local_port, uint16_t remote_port);    
-	//Sends a UDP message. to: the destination IPv6 address, data: pointer to data, datalen: the length of the data. 
-    static void udpSend(const IPv6Address &to, const void *data, uint16_t datalen);
+	//Initializes the UDP listening in the local port
+    static void initUdp(uint16_t local_port);    
+	//Sends a UDP message. to: the destination IPv6 address, remote_port: the destination port, data: pointer to data, datalen: the length of the data. 
+    static void udpSend(const IPv6Address &to, uint16_t remote_port, const void *data, uint16_t datalen);
 	//Returns true if a packet has been received at MAC layer and has been successfully decompressed (6lowPAN)
     static bool receivePacket();     
 	//Processes ipv6 received packets if any

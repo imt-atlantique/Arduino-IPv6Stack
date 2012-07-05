@@ -56,7 +56,7 @@ int mem(){
 }
 
 //We need a specific object to implement the MACLayer interface (the virtual methods). In this case we use XBee but could be anyone capable of implementing that interface
-MACLayer* macLayer = new XBeeMACLayer();
+XBeeMACLayer macLayer;
 
 //We use a buffer in order to put the data that we will send
 #define UDP_MAX_DATA_LEN 100
@@ -119,7 +119,7 @@ void udp_callback(char *data, int datalen, int sender_port, IPv6Address &sender_
   //In case we have been given a prefix by a router and we have validated our global address, change the address of the sender by changing its prefix. It is related to the same router, messages will go through it
   change_addr_prefix(sender_addr);
   addr_dest = sender_addr; //now if our message is not responded, it will be resent from the main loop to the same destination
-  IPv6Stack::udp_send(sender_addr, udp_send, datalen);
+  IPv6Stack::udpSend(sender_addr, sender_port, udp_send, datalen);
   send_timer.restart();//each time we receive something we rstart this timer so we should not send in the main loop as long as our message is responded
 }
 
@@ -131,14 +131,14 @@ void setup(){
   Serial.println(mem());
   delay(100);
   // init network-device
-  if (!IPv6Stack::init_macLayer(macLayer)){
+  if (!IPv6Stack::initMacLayer(&macLayer)){
     Serial.println("CANNOT INITIALIZE XBEE MODULE.. CANNOT CONTINUE");
     while (true){};
   }
-  IPv6Stack::init_ipStack();  
+  IPv6Stack::initIpStack();  
   Serial.println("IPV6 INITIALIZED");
   delay(100);
-  IPv6Stack::init_udp(UDP_PORT, UDP_PORT);
+  IPv6Stack::initUdp(UDP_PORT);
   Serial.println("UDP INITIALIZED");
   delay(100);
   
@@ -161,19 +161,19 @@ IPv6Address sender_address;
 
 void loop(){
   //Always need to poll timers in order to make the IPv6 Stack work
-  IPv6Stack::poll_timers();  
+  IPv6Stack::pollTimers();  
 #if !UIP_CONF_ROUTER
   if (send_timer.expired()){
       send_timer.reset();
       Serial.println();
       Serial.println("Sending data..");
       delay(50);   
-      IPv6Stack::udp_send(addr_dest, "0123456789", 10);
+      IPv6Stack::udpSend(addr_dest, UDP_PORT, "0123456789", 10);
   }
 #endif
   //We always check if we got anything. If we did, process that with the IPv6 Stack
-  if (IPv6Stack::receive_packet()){
-      IPv6Stack::process_ipStack();  
+  if (IPv6Stack::receivePacket()){
+      IPv6Stack::processIpStack();  
 #if !UIP_CONF_ROUTER
       //If we are not configured as router, check if udp data is available and run the callback with it
       if (IPv6Stack::udpDataAvailable()){
