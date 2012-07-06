@@ -81,6 +81,8 @@ bool IPv6Stack::receivePacket() {
   if (IPv6Stack::mac->receive(ll_src_addr, ll_dst_addr, uip_6lp_buf.u8, uip_6lp_len)){  
     //now decompress
     input(&ll_src_addr, &ll_dst_addr);
+	if (uip_len != 0)
+		processIpStack();
     return true;
   }else
     return false;

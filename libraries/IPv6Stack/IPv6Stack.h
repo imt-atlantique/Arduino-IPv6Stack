@@ -21,6 +21,8 @@ class IPv6Stack
     static struct simple_udp_connection broadcast_connection;
     static void receiver(struct simple_udp_connection *c, const uip_ipaddr_t *sender_addr,
          uint16_t sender_port, const uip_ipaddr_t *receiver_addr, uint16_t receiver_port, const uint8_t *data, uint16_t datalen);
+	//Processes ipv6 received packets if any
+    static void processIpStack();
          
     static const uint8_t* udp_data;
     static uint16_t udp_data_length;
@@ -40,8 +42,6 @@ class IPv6Stack
     static void udpSend(const IPv6Address &to, uint16_t remote_port, const void *data, uint16_t datalen);
 	//Returns true if a packet has been received at MAC layer and has been successfully decompressed (6lowPAN)
     static bool receivePacket();     
-	//Processes ipv6 received packets if any
-    static void processIpStack();
 	//Refreshes timers and if expired, runs the corresponding methods (sending RS, RA, NS, etc)
     static void pollTimers(); //Note: polling timers put received udp data to 0
 	//Adds manually an address to our list or addresses

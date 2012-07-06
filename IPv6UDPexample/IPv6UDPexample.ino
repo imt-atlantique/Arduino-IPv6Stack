@@ -148,7 +148,7 @@ void setup(){
       delay(50);      
   #else
       //This line is added to specify our prefix    
-      IPv6Stack::set_prefix(prefix, 64);    
+      IPv6Stack::setPrefix(prefix, 64);    
   #endif /*UIP_CONF_ROUTER*/
   
   Serial.println("SETUP FINISHED!");
@@ -173,7 +173,6 @@ void loop(){
 #endif
   //We always check if we got anything. If we did, process that with the IPv6 Stack
   if (IPv6Stack::receivePacket()){
-      IPv6Stack::processIpStack();  
 #if !UIP_CONF_ROUTER
       //If we are not configured as router, check if udp data is available and run the callback with it
       if (IPv6Stack::udpDataAvailable()){
