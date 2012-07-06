@@ -73,6 +73,11 @@ IPv6Address addr_dest;
 //We use a timer in order to send data if we do not have to respond to a message received.
 IPv6Timer send_timer;
 
+char udp_data[UDP_MAX_DATA_LEN];
+int udp_data_length = 0;
+IPv6Address sender_address;
+uint16_t dest_port = UDP_PORT;
+
 //changes the /64 prefix of the given address to the value of the prefix that was given to us by a router (if any). Returns true if we have an address with a prefix like this and false if we did not get a prefix and thus a global address
 bool change_addr_prefix(IPv6Address &address){
   IPv6Address globalAddress;
@@ -119,6 +124,7 @@ void udp_callback(char *data, int datalen, int sender_port, IPv6Address &sender_
   //In case we have been given a prefix by a router and we have validated our global address, change the address of the sender by changing its prefix. It is related to the same router, messages will go through it
   change_addr_prefix(sender_addr);
   addr_dest = sender_addr; //now if our message is not responded, it will be resent from the main loop to the same destination
+  dest_port = sender_port;
   IPv6Stack::udpSend(sender_addr, sender_port, udp_send, datalen);
   send_timer.restart();//each time we receive something we rstart this timer so we should not send in the main loop as long as our message is responded
 }
@@ -155,10 +161,6 @@ void setup(){
   delay(100);
 }
 
-char udp_data[UDP_MAX_DATA_LEN];
-int udp_data_length = 0;
-IPv6Address sender_address;
-
 void loop(){
   //Always need to poll timers in order to make the IPv6 Stack work
   IPv6Stack::pollTimers();  
@@ -168,7 +170,7 @@ void loop(){
       Serial.println();
       Serial.println("Sending data..");
       delay(50);   
-      IPv6Stack::udpSend(addr_dest, UDP_PORT, "0123456789", 10);
+      IPv6Stack::udpSend(addr_dest, dest_port, "0123456789", 10);
   }
 #endif
   //We always check if we got anything. If we did, process that with the IPv6 Stack

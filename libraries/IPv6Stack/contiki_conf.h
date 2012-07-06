@@ -150,6 +150,8 @@ typedef unsigned char process_event_t;
 #define SICSLOWPAN_CONF_MAX_MAC_TRANSMISSIONS   5
 #endif /* SICSLOWPAN_CONF_MAX_MAC_TRANSMISSIONS */
 
+#define SICSLOWPAN_CONF_ADDR_CONTEXT_0 {addr_contexts[0].prefix[0]=0xaa;addr_contexts[0].prefix[1]=0xaa;addr_contexts[0].prefix[2]=0;addr_contexts[0].prefix[3]=0;addr_contexts[0].prefix[4]=0;addr_contexts[0].prefix[5]=0;addr_contexts[0].prefix[6]=0;addr_contexts[0].prefix[7]=0;}
+
 #else /* WITH_UIP6 */
 
 #define UIP_CONF_IP_FORWARD      0
