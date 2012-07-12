@@ -82,16 +82,8 @@
 /* For Debug, logging, statistics                                            */
 /*---------------------------------------------------------------------------*/
 
-#define DEBUG 0
-#if DEBUG
-#define PRINTF(m) arduino_debug(m)
-#define PRINT6ADDR(addr) arduino_debug_address(addr) 
-#define PRINTLLADDR(lladdr) arduino_debug_lladdr(lladdr)
-#else
-#define PRINTF(...)
-#define PRINT6ADDR(addr)
-#define PRINTLLADDR(lladdr) 
-#endif
+#define DEBUG DEBUG_NONE
+#include "uip_debug.h"
 
 #if UIP_CONF_IPV6_RPL
 void uip_rpl_input(void);
@@ -1038,7 +1030,6 @@ uip_process(u8_t flag)
     goto drop;
   }
   
-  //arduino_debug("VALID IPV6");
   /*
    * Check the size of the packet. If the size reported to us in
    * uip_len is smaller the size reported in the IP header, we assume
@@ -1367,7 +1358,6 @@ uip_process(u8_t flag)
   /* UDP input processing. */
  udp_input:
   PRINTF("Receiving UDP packet");
-  //arduino_debug("Receiving UDP packet");
   UIP_STAT(++uip_stat.udp.recv);
  
   /* UDP processing is really just a hack. We don't do anything to the

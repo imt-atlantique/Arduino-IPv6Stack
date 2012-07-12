@@ -2,7 +2,7 @@
 #ifndef IPV6STACK_H
 #define IPV6STACK_H
 
-extern "C" {
+extern "C" {  
     #include <inttypes.h>
     #include "uip.h"
     #include "simple_udp.h"
@@ -10,6 +10,7 @@ extern "C" {
 
 #include "MACLayer.h"
 #include "IPv6Address.h"
+#include "IPv6llAddress.h"
 #include "IPv6Timer.h"
 
 class IPv6Stack
@@ -21,7 +22,7 @@ class IPv6Stack
     static struct simple_udp_connection broadcast_connection;
     static void receiver(struct simple_udp_connection *c, const uip_ipaddr_t *sender_addr,
          uint16_t sender_port, const uip_ipaddr_t *receiver_addr, uint16_t receiver_port, const uint8_t *data, uint16_t datalen);
-	//Processes ipv6 received packets if any
+    	//Processes ipv6 received packets if any
     static void processIpStack();
          
     static const uint8_t* udp_data;
@@ -29,6 +30,8 @@ class IPv6Stack
     static uint16_t udp_data_length_left;
     static const uip_ipaddr_t* sender_addr;
     static uint16_t sender_port;
+    static IPv6llAddress ll_destination_address;
+    static IPv6llAddress ll_source_address;
               
   public:
     
@@ -64,5 +67,6 @@ class IPv6Stack
     static void getUdpSenderIpAddress(IPv6Address &address);
 };	
 
+		
 #endif
 

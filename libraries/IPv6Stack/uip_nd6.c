@@ -75,16 +75,8 @@
 #include "random.h"
 
 /*------------------------------------------------------------------*/
-#define DEBUG 0
-#if DEBUG
-#define PRINTF(m) arduino_debug(m)
-#define PRINT6ADDR(addr) arduino_debug_address(addr) 
-#define PRINTLLADDR(lladdr) arduino_debug_lladdr(lladdr)
-#else
-#define PRINTF(...)
-#define PRINT6ADDR(addr)
-#define PRINTLLADDR(lladdr) 
-#endif
+#define DEBUG DEBUG_NONE
+#include "uip_debug.h"
 
 #if UIP_LOGGING
 #define UIP_LOG(m) arduino_debug(m)

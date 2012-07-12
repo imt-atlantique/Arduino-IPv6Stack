@@ -36,10 +36,29 @@
  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  SUCH DAMAGE.
  
- */
+ /*---------------------------------------------------------------------------------------------------------------------------------------------------------------
+   This example test the interoperability of different Arduino Mega + Xbee S1 to send messages and respond them inverted.
+   The example was tested within a scenario of 4 nodes (a root, an intermediate router node, and two leaves):
+   
+         O
+        / \
+       O   O
+      /
+     O
+   
+   In this case, the start sending multicast messages and respond to received messages with the data inverted. 
+   If they get a prefix from a DIO, they change the prefix of the source ip address of the message received and they send it to that address, inverted.
+   This allows to see the routing of the router nodes.
+   In case the device is an intermediate router, it will not send broadcast messages but it will answer to received messages (only if it has already got a prefix)
+   In case the device is a border router (root of the DoDAG), it will never send messages or answer to them, but it sets a hardcoded prefix used for the network.   
+ ---------------------------------------------------------------------------------------------------------------------------------------------------------------*/
  
 #include <IPv6Stack.h>
 #include <XBeeMACLayer.h>
+
+#define IS_INTERMEDIATE_ROUTER  (UIP_CONF_ROUTER && 1)// FOR INTERMEDIATE ROUTERS: 1, FOR NODES: 0 -> UIP_CONF_ROUTER MUST BE 1
+
+#define IS_BORDER_ROUTER (UIP_CONF_ROUTER && !IS_INTERMEDIATE_ROUTER)
 
 #define UDP_PORT 8765
 
@@ -65,7 +84,7 @@ char udp_send[UDP_MAX_DATA_LEN];
 //This will be the destination IP address
 IPv6Address addr_dest;
 
-#if UIP_CONF_ROUTER
+#if IS_BORDER_ROUTER
   //If we are configured to be a router, this is our prefix. Up to now we hardcode it here. Note: The aaaa::/64 prefix is the only known by the 6loPAN context so it will achieve a better compression.
   IPv6Address prefix(0xaa, 0xaa, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 #endif
@@ -93,8 +112,8 @@ bool change_addr_prefix(IPv6Address &address){
 
 //This is what we will run as a result of receiving a UDP message. We first use the serial port to show what we received, wait half of the sending time and send the response to the sender that is, actually, the same message inverted
 void udp_callback(char *data, int datalen, int sender_port, IPv6Address &sender_addr){  
-  //Serial.println(mem());
-  //delay(100);
+  Serial.println(mem());
+  delay(100);
   //Show received dada
   data[datalen] = 0;
   Serial.println();
@@ -110,23 +129,28 @@ void udp_callback(char *data, int datalen, int sender_port, IPv6Address &sender_
      Serial.print(IPv6Stack::readUdpData());
   }
   Serial.println();
-  
+        
+    //In case we have been given a prefix by a router and we have validated our global address, change the address of the sender by changing its prefix. It is related to the same router, messages will go through it
+  if (!change_addr_prefix(sender_addr)){
+    #if IS_INTERMEDIATE_ROUTER // routers do not respond until they have their prefix (Border Routers never respond)
+    return;
+    #endif
+  }
+    
   delay(SEND_INTERVAL/2);//take SEND_INTERVAL/2 to respond
-  
+
   Serial.println("Sending response..");
   Serial.println(); 
   delay(50); 
   int j;
-  //Invert the message
   for(j=0; j<datalen; ++j){
     udp_send[datalen-1-j] = data[j]; 
   }
-  //In case we have been given a prefix by a router and we have validated our global address, change the address of the sender by changing its prefix. It is related to the same router, messages will go through it
-  change_addr_prefix(sender_addr);
   addr_dest = sender_addr; //now if our message is not responded, it will be resent from the main loop to the same destination
   dest_port = sender_port;
   IPv6Stack::udpSend(sender_addr, sender_port, udp_send, datalen);
-  send_timer.restart();//each time we receive something we rstart this timer so we should not send in the main loop as long as our message is responded
+  delay(50);
+  send_timer.restart();//each time we receive something we reset this timer so we should not send in the main loop as long as our message is responded
 }
 
 void setup(){  
@@ -136,26 +160,32 @@ void setup(){
   Serial.print("MEMORY LEFT:");
   Serial.println(mem());
   delay(100);
+  
   // init network-device
   if (!IPv6Stack::initMacLayer(&macLayer)){
     Serial.println("CANNOT INITIALIZE XBEE MODULE.. CANNOT CONTINUE");
     while (true){};
   }
+  
+  //init IP Stack
   IPv6Stack::initIpStack();  
   Serial.println("IPV6 INITIALIZED");
   delay(100);
+  
+  //init UDP
   IPv6Stack::initUdp(UDP_PORT);
   Serial.println("UDP INITIALIZED");
   delay(100);
   
-  #if !UIP_CONF_ROUTER
+  //If Border Router, set prefix. If not, set a timer to send data
+  #if !IS_BORDER_ROUTER
       send_timer.set(SEND_INTERVAL);
       Serial.println("SEND TIMER SET");
       delay(50);      
   #else
       //This line is added to specify our prefix    
-      IPv6Stack::setPrefix(prefix, 64);    
-  #endif /*UIP_CONF_ROUTER*/
+      IPv6Stack::setPrefix(prefix, 64); 
+  #endif /*IS_BORDER_ROUTER*/
   
   Serial.println("SETUP FINISHED!");
   delay(100);
@@ -164,6 +194,7 @@ void setup(){
 void loop(){
   //Always need to poll timers in order to make the IPv6 Stack work
   IPv6Stack::pollTimers();  
+  //If we are not a router (any kind), we also send messages
 #if !UIP_CONF_ROUTER
   if (send_timer.expired()){
       send_timer.reset();
@@ -175,8 +206,8 @@ void loop(){
 #endif
   //We always check if we got anything. If we did, process that with the IPv6 Stack
   if (IPv6Stack::receivePacket()){
-#if !UIP_CONF_ROUTER
-      //If we are not configured as router, check if udp data is available and run the callback with it
+#if !IS_BORDER_ROUTER
+      //If we are not configured as border router, check if udp data is available and run the callback with it
       if (IPv6Stack::udpDataAvailable()){
         udp_data_length = IPv6Stack::getUdpDataLength();
         IPv6Stack::getUdpData(udp_data);
@@ -187,3 +218,5 @@ void loop(){
   }
   delay(100);
 }
+
+/*---------------------------------------------------------------------------*/

@@ -104,10 +104,15 @@ typedef unsigned char process_event_t;
 #define UIP_CONF_LL_802154              1
 #define UIP_CONF_LLH_LEN                0
 
-#define UIP_CONF_ROUTER                 0 //0 FOR NODES, 1 FOR ROUTERS (TO DO ROUTING OR NOT)
-#ifndef UIP_CONF_IPV6_RPL
-#define UIP_CONF_IPV6_RPL               0 //0 NO RPL, 1 WITH RPL
-#endif /* UIP_CONF_IPV6_RPL */
+/*-------------------------------------------------------------------------------------------------------*/
+
+#define UIP_CONF_ROUTER        1 //0 FOR NODES, 1 FOR ROUTERS (BE A ROUTER OR NOT)
+
+#define UIP_CONF_IPV6_RPL      1 //0 WITHOUT RPL, 1 WITH RPL
+
+#define UIP_CONF_ND6_SEND_RA   0 //0 FOR NODES, 1 FOR ROUTERS (SELECT TO SEND ROUTER ADVERTISEMENT OR NOT)
+
+/*-------------------------------------------------------------------------------------------------------*/
 
 /* configure number of neighbors and routes */
 #ifndef UIP_CONF_DS6_NBR_NBU
@@ -117,7 +122,7 @@ typedef unsigned char process_event_t;
 #define UIP_CONF_DS6_ROUTE_NBU   3
 #endif /* UIP_CONF_DS6_ROUTE_NBU */
 
-#define UIP_CONF_ND6_SEND_RA		0 //0 FOR NODES, 1 FOR ROUTERS (SELECT TO SEND ROUTER ADVERTISEMENT OR NOT)
+
 #define UIP_CONF_ND6_REACHABLE_TIME     600000
 #define UIP_CONF_ND6_RETRANS_TIMER      10000
 
@@ -198,5 +203,33 @@ typedef uint32_t clock_time_t;
 
 /* Not part of C99 but actually present */
 //int strcasecmp(const char*, const char*);
+
+//ADDED ALE
+//MAC constants
+
+/* Generic MAC return values. */
+enum {
+  /**< The MAC layer transmission was OK. */
+  MAC_TX_OK,
+
+  /**< The MAC layer transmission could not be performed due to a
+     collision. */
+  MAC_TX_COLLISION,
+
+  /**< The MAC layer did not get an acknowledgement for the packet. */
+  MAC_TX_NOACK,
+
+  /**< The MAC layer deferred the transmission for a later time. */
+  MAC_TX_DEFERRED,
+
+  /**< The MAC layer transmission could not be performed because of an
+     error. The upper layer may try again later. */
+  MAC_TX_ERR,
+
+  /**< The MAC layer transmission could not be performed because of a
+     fatal error. The upper layer does not need to try again, as the
+     error will be fatal then as well. */
+  MAC_TX_ERR_FATAL,
+};
 
 #endif /* __CONTIKI_CONF_H__ */

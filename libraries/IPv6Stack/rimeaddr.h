@@ -57,7 +57,6 @@
 
 #include "contiki_conf.h"
 
-//#include "mac.h"
 
 typedef union {
   unsigned char u8[8];

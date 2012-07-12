@@ -46,17 +46,8 @@
 #include "uip_nd6.h"
 #include "uip_ds6.h"
 
-#define DEBUG 0
-#if DEBUG
-#include <stdio.h>
-#define PRINTF(m) arduino_debug(m)
-#define PRINT6ADDR(addr) arduino_debug_address(addr)
-#define PRINTLLADDR(lladdr) arduino_debug_lladdr(lladdr)
-#else
-#define PRINTF(...)
-#define PRINT6ADDR(addr)
-#define PRINTLLADDR(lladdr) 
-#endif
+#define DEBUG DEBUG_NONE
+#include "uip_debug.h"
 
 #define ANNOTATE 
 
@@ -405,7 +396,6 @@ void
 uip_ds6_defrt_rm(uip_ds6_defrt_t *defrt)
 {
   if(defrt != NULL) {
-    PRINTF("DS6: DELETING DEFRT");
     defrt->isused = 0;
     //ANNOTATE("#L u 0", defrt->ipaddr.u8[sizeof(uip_ipaddr_t) - 1]);
   }

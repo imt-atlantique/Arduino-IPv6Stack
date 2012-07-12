@@ -39,8 +39,6 @@
 
 #include "tcpip.h"
 #include "uip.h"
-#include "uip_fw.h"
-#include "uip_fw_drv.h"
 #include "uip_arp.h"
 #include "uiplib.h"
 #include "uip_udp_packet.h"

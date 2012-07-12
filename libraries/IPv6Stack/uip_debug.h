@@ -73,12 +73,16 @@ void uip_debug_lladdr_print(const uip_lladdr_t *addr);
 
 #if (DEBUG) & DEBUG_PRINT
 #define PRINTF(m) arduino_debug(m)
+#define PRINTFI(m) arduino_debug(m)
+#define PRINTFO(m) arduino_debug(m)
 #define PRINTF_DEC(m) arduino_debug_dec(m)
 #define PRINTF_HEX(m) arduino_debug_hex(m)
 #define PRINT6ADDR(addr) uip_debug_ipaddr_print(addr)
 #define PRINTLLADDR(lladdr) uip_debug_lladdr_print(lladdr)
 #else
 #define PRINTF(...)
+#define PRINTFI(...)
+#define PRINTFO(...)
 #define PRINTF_DEC(m) 
 #define PRINTF_HEX(m) 
 #define PRINT6ADDR(addr)

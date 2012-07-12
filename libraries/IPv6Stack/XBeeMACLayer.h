@@ -9,15 +9,19 @@
 class XBeeMACLayer: public MACLayer{
     private:
       XBee xbee;
-      uip_lladdr_t my_mac;
+      IPv6llAddress my_mac;
       
-      bool sendAtCommand(uint8_t& mac_position);
+      bool sendAtCommand();
+      bool getResponseMAC();
+      bool getResponseCCAFailure();
+      int getNumberOfTransmissions();
+      
     public:      
       XBeeMACLayer();
       bool init();
-      bool send(const uip_lladdr_t *lladdr_dest, uint8_t* data, uint16_t length);
-      bool receive(uip_lladdr_t &lladdr_src, uip_lladdr_t &lladdr_dest, uint8_t* data, uint16_t& length);
-      const uip_lladdr_t& getMacAddress();
+      MACTransmissionStatus send(const IPv6llAddress& lladdr_dest, uint8_t* data, uint16_t length, int &number_transmissions);
+      bool receive(IPv6llAddress& lladdr_src, IPv6llAddress& lladdr_dest, uint8_t* data, uint16_t& length);
+      const IPv6llAddress& getMacAddress();
 };
 
 #endif

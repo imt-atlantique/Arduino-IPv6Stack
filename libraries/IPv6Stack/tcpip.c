@@ -50,16 +50,8 @@
 #include "uip_ds6.h"
 #endif
 
-#define DEBUG 0
-#if DEBUG
-#define PRINTF(m) arduino_debug(m)
-#define PRINT6ADDR(addr) arduino_debug_address(addr) 
-#define PRINTLLADDR(lladdr) arduino_debug_lladdr(lladdr)
-#else
-#define PRINTF(...)
-#define PRINT6ADDR(addr)
-#define PRINTLLADDR(lladdr) 
-#endif
+#define DEBUG DEBUG_NONE
+#include "uip_debug.h"
 
 #define UIP_ICMP_BUF ((struct uip_icmp_hdr *)&uip_buf[UIP_LLIPH_LEN + uip_ext_len])
 #define UIP_IP_BUF ((struct uip_ip_hdr *)&uip_buf[UIP_LLH_LEN])
@@ -415,12 +407,14 @@ eventhandler(int ev, void *data)
         if(data == &uip_ds6_timer_rs &&
            etimer_expired(&uip_ds6_timer_rs)){
           uip_ds6_send_rs();
+          PRINTF("ABOUT TO SEND RS");
           tcpip_ipv6_output();
         }
 #endif /* !UIP_CONF_ROUTER */
         if(data == &uip_ds6_timer_periodic &&
            etimer_expired(&uip_ds6_timer_periodic)){
           uip_ds6_periodic();
+          PRINTF("ABOUT TO DO PERIODIC");
           tcpip_ipv6_output();
         }
 #endif /* UIP_CONF_IPV6 */
@@ -584,6 +578,7 @@ tcpip_ipv6_output(void)
       stimer_set(&(nbr->sendns),
                 uip_ds6_if.retrans_timer / 1000);
 
+      PRINTF("SENDING MSG TO MAC LEVEL");
       tcpip_output(&(nbr->lladdr));
 
 

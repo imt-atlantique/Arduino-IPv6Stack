@@ -46,16 +46,8 @@
 #include "uip_ds6.h"
 #include "uip_icmp6.h"
 
-#define DEBUG 0
-#if DEBUG
-#define PRINTF(m) arduino_debug(m)
-#define PRINT6ADDR(addr) arduino_debug_address(addr) 
-#define PRINTLLADDR(lladdr) arduino_debug_lladdr(lladdr)
-#else
-#define PRINTF(...)
-#define PRINT6ADDR(addr)
-#define PRINTLLADDR(lladdr) 
-#endif
+#define DEBUG DEBUG_NONE
+#include "uip_debug.h"
 
 #define UIP_IP_BUF                ((struct uip_ip_hdr *)&uip_buf[UIP_LLH_LEN])
 #define UIP_ICMP_BUF            ((struct uip_icmp_hdr *)&uip_buf[uip_l2_l3_hdr_len])

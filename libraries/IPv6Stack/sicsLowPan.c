@@ -63,32 +63,8 @@
 #include "uip_ds6.h"
 #include "sicsLowPan.h"
 
-#include "arduino_debug.h"
-
-#define DEBUG 0
-
-#if DEBUG
-#define PRINTF(m) arduino_debug(m)
-#define PRINTF_HEX(m) arduino_debug_hex(m)//ADDED ALE
-#define PRINTFI(m) arduino_debug(m)
-#define PRINTFO(m) arduino_debug(m)
-#define PRINT6ADDR(addr) arduino_debug_address(addr)
-#define PRINTLLADDR(lladdr) arduino_debug_lladdr(lladdr)
-#define PRINTPACKETBUF() 
-#define PRINTUIPBUF() 
-#define PRINTSICSLOWPANBUF() 
-#else
-#define PRINTF(...)
-#define PRINTF_HEX(...)//ADDED ALE
-#define PRINTFI(...)
-#define PRINTFO(...)
-#define PRINT6ADDR(addr)
-#define PRINTLLADDR(lladdr)
-#define PRINTPACKETBUF()
-#define PRINTUIPBUF()
-#define PRINTSICSLOWPANBUF()
-#endif 
-
+#define DEBUG DEBUG_NONE
+#include "uip_debug.h"
 
 #if SICSLOWPAN_CONF_FRAG
 /** \name Fragmentation related variables
@@ -1039,7 +1015,7 @@ send_packet(rimeaddr_t *dest)
  */
 uint8_t
 output(uip_lladdr_t *localdest)
-{  
+{
   /* The MAC address of the destination of the packet */
   rimeaddr_t dest;
 
@@ -1060,10 +1036,8 @@ output(uip_lladdr_t *localdest)
   if(localdest == NULL) {
     //mac_addr_size = UIP_802154_SHORTADDR_LEN;
     rimeaddr_copy(&dest, &rimeaddr_null);
-    PRINTFO("6LPAN: DEST IS NULL");
   } else {
     rimeaddr_copy(&dest, (const rimeaddr_t *)localdest);
-    PRINTFO("6LPAN: COPY DEST");
   }
   
   PRINTFO("sicslowpan output: sending packet len Xd");//, uip_len);
@@ -1389,10 +1363,6 @@ input(uip_lladdr_t *uip_lladdr_source, uip_lladdr_t *uip_lladdr_destination)
     }
 #endif
 
-#if SICSLOWPAN_CONF_NEIGHBOR_INFO
-    neighbor_info_packet_received();
-#endif /* SICSLOWPAN_CONF_NEIGHBOR_INFO */
-
 #if SICSLOWPAN_CONF_FRAG
   }
 #endif /* SICSLOWPAN_CONF_FRAG */
@@ -1433,8 +1403,8 @@ sicslowpan_init(u8_t (* f)(uip_lladdr_t *))
 #ifdef SICSLOWPAN_CONF_ADDR_CONTEXT_0
 	SICSLOWPAN_CONF_ADDR_CONTEXT_0;
 #else
-  addr_contexts[0].prefix[0] = 0xaa; 
-  addr_contexts[0].prefix[1] = 0xaa;
+  addr_contexts[0].prefix[0] = 0x0; 
+  addr_contexts[0].prefix[1] = 0x0;
 #endif
 #endif /* SICSLOWPAN_CONF_MAX_ADDR_CONTEXTS > 0 */
 

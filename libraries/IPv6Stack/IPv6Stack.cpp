@@ -5,6 +5,9 @@ extern "C" {
         #include "uip_ds6.h"
 	#include "uip_nd6.h"
 	#include "uip_arp.h"
+	#include "ctimer.h"
+        #include "neighbor_info.h"
+        #include "rpl.h"
 	#include <string.h>	
 }
 #include "XBee.h"
@@ -18,6 +21,9 @@ extern "C" {
 MACLayer* IPv6Stack::mac;
 struct simple_udp_connection IPv6Stack::broadcast_connection;
 
+IPv6llAddress IPv6Stack::ll_destination_address;
+IPv6llAddress IPv6Stack::ll_source_address;
+
 const uint8_t* IPv6Stack::udp_data;
 uint16_t IPv6Stack::udp_data_length = 0;
 uint16_t IPv6Stack::udp_data_length_left = 0;
@@ -30,9 +36,12 @@ bool IPv6Stack::initMacLayer(MACLayer* macLayer){
   return IPv6Stack::mac->init();
 }
 
-uint8_t IPv6Stack::mac_output(uip_lladdr_t *lladdr_destination) {
-  IPv6Stack::mac->send(lladdr_destination, uip_6lp_buf.u8, uip_6lp_len);
-  return 0;
+uint8_t IPv6Stack::mac_output(uip_lladdr_t *lladdr) {
+  int numberTrans = 0;
+  rimeaddr_copy((rimeaddr_t*)&ll_destination_address.address, (const rimeaddr_t*) lladdr);
+  uint8_t status = IPv6Stack::mac->send(ll_destination_address, uip_6lp_buf.u8, uip_6lp_len, numberTrans);
+  neighbor_info_packet_sent(status, numberTrans, (const rimeaddr_t*)lladdr);
+  return status;
 }
 
 void IPv6Stack::initIpStack() {
@@ -40,10 +49,12 @@ void IPv6Stack::initIpStack() {
     #if ARDUINO_DEBUG
     arduino_debug_init();
     #endif
-        
+    
+    ctimer_init();
+    
     // copy MAC-address
     for (addr_pos = 0; addr_pos<UIP_LLADDR_LEN; addr_pos++) 
-        uip_lladdr.addr[addr_pos] = IPv6Stack::mac->getMacAddress().addr[addr_pos];
+        uip_lladdr.addr[addr_pos] = IPv6Stack::mac->getMacAddress().getAddressValue(addr_pos);
     
     sicslowpan_init(IPv6Stack::mac_output);
     
@@ -72,20 +83,25 @@ void IPv6Stack::initUdp(uint16_t local_port) {
 }
 
 void IPv6Stack::udpSend(const IPv6Address &to, uint16_t remote_port, const void *data, uint16_t datalen){
-	broadcast_connection.remote_port = remote_port;
-	broadcast_connection.udp_conn->rport = UIP_HTONS(remote_port);
+  broadcast_connection.remote_port = remote_port;
+  broadcast_connection.udp_conn->rport = UIP_HTONS(remote_port);
   simple_udp_sendto(&broadcast_connection, data, datalen, &to.address); 
 }
 
 bool IPv6Stack::receivePacket() {       
-  if (IPv6Stack::mac->receive(ll_src_addr, ll_dst_addr, uip_6lp_buf.u8, uip_6lp_len)){  
+  if (IPv6Stack::mac->receive(ll_source_address, ll_destination_address, uip_6lp_buf.u8, uip_6lp_len)){ 
+    rimeaddr_copy((rimeaddr_t*)&ll_dst_addr, (const rimeaddr_t*)&ll_destination_address.address);
+    rimeaddr_copy((rimeaddr_t*)&ll_src_addr, (const rimeaddr_t*)&ll_source_address.address);
+    uip_len = 0;
     //now decompress
     input(&ll_src_addr, &ll_dst_addr);
-	if (uip_len != 0)
-		processIpStack();
-    return true;
-  }else
-    return false;
+    if (uip_len != 0){//if we decompressed sth, update the neighbor info and process the decompressed IPv6 packet
+      neighbor_info_packet_received((const rimeaddr_t*)&ll_src_addr);
+      processIpStack();
+      return true;
+    }
+  }
+  return false;
 }
  
 
@@ -106,12 +122,19 @@ void IPv6Stack::addAddress(IPv6Address &address){
 #if UIP_CONF_ROUTER
 void IPv6Stack::setPrefix(IPv6Address &prefix, uint8_t prefix_length)
 {  
-    uip_ipaddr_t ipaddr;
-    memcpy(&ipaddr, &prefix.address, 16);
-    uip_ds6_set_addr_iid(&ipaddr, &uip_lladdr);
-    uip_ds6_addr_add(&ipaddr, 0, ADDR_AUTOCONF);
-    uip_ds6_prefix_add(&prefix.address, prefix_length, 1, UIP_ND6_RA_FLAG_AUTONOMOUS, UIP_ND6_INFINITE_LIFETIME, 0);
-  
+    #if !UIP_CONF_IPV6_RPL
+      uip_ipaddr_t ipaddr;
+      memcpy(&ipaddr, &prefix.address, 16);
+      uip_ds6_set_addr_iid(&ipaddr, &uip_lladdr);
+      uip_ds6_addr_add(&ipaddr, 0, ADDR_AUTOCONF);
+      uip_ds6_prefix_add(&prefix.address, prefix_length, 1, UIP_ND6_RA_FLAG_AUTONOMOUS, UIP_ND6_INFINITE_LIFETIME, 0);  
+    #else /* UIP_CONF_IPV6_RPL */
+      uip_ds6_set_addr_iid(&prefix.address, &uip_lladdr);
+      rpl_dag_t *dag;
+      rpl_set_root((uip_ip6addr_t *)&prefix.address);
+      dag = rpl_get_dag(RPL_ANY_INSTANCE);
+      rpl_set_prefix(dag, &prefix.address, prefix_length);
+    #endif /* UIP_CONF_IPV6_RPL */   
 }
 #endif
 

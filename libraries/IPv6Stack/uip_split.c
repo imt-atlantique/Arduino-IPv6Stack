@@ -36,7 +36,6 @@
 #include <string.h>
 #include "uip_split.h"
 #include "uip.h"
-#include "uip_fw.h"
 #include "uip_arch.h"
 
 #include "tcpip.h"
