@@ -4,7 +4,7 @@
  This class represents an IPv6 link layer address (8 octets) used by the IPv6 stack
  
  created 29 June 2012
- by Alejandro Lampropulos
+ by Alejandro Lampropulos (alejandro.lampropulos@telecom-bretagne.eu)
  Telecom Bretagne Rennes, France
  
  Copyright (c) 2012, Telecom Bretagne Rennes, France.

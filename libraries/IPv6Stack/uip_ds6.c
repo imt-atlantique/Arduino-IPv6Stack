@@ -121,7 +121,8 @@ uip_ds6_init(void)
   uip_ds6_prefix_add(&loc_fipaddr, UIP_DEFAULT_PREFIX_LEN, 0);
 #endif /* UIP_CONF_ROUTER */
   uip_ds6_set_addr_iid(&loc_fipaddr, &uip_lladdr);  
-  uip_ds6_addr_add_preferred(&loc_fipaddr, 0, ADDR_AUTOCONF);// CHANGED ALLE
+  uip_ds6_addr_add(&loc_fipaddr, 0, ADDR_AUTOCONF);
+  //uip_ds6_addr_add_preferred(&loc_fipaddr, 0, ADDR_AUTOCONF);// CHANGED ALLE
 
   uip_create_linklocal_allnodes_mcast(&loc_fipaddr);
   uip_ds6_maddr_add(&loc_fipaddr);
@@ -564,7 +565,7 @@ uip_ds6_addr_add(uip_ipaddr_t *ipaddr, unsigned long vlifetime, uint8_t type)
   return NULL;
 }
 
-/*---------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------
 uip_ds6_addr_t *
 uip_ds6_addr_add_preferred(uip_ipaddr_t *ipaddr, unsigned long vlifetime, uint8_t type) //ADDED ALE
 {

@@ -5,7 +5,7 @@
  As long as these methods can be implemented, any technology could be used in the link layer.
  
  created 29 June 2012
- by Alejandro Lampropulos
+ by Alejandro Lampropulos (alejandro.lampropulos@telecom-bretagne.eu)
  Telecom Bretagne Rennes, France
  
  Copyright (c) 2012, Telecom Bretagne Rennes, France.

@@ -9,7 +9,7 @@
  * Wireless shield w/ Xbee Series 1
  
  created 29 June 2012
- by Alejandro Lampropulos
+ by Alejandro Lampropulos (alejandro.lampropulos@telecom-bretagne.eu)
  Telecom Bretagne Rennes, France
  
  Redistribution and use in source and binary forms, with or without
@@ -56,7 +56,7 @@
 #include <IPv6Stack.h>
 #include <XBeeMACLayer.h>
 
-#define IS_INTERMEDIATE_ROUTER  (UIP_CONF_ROUTER && 1)// FOR INTERMEDIATE ROUTERS: 1, FOR NODES: 0 -> UIP_CONF_ROUTER MUST BE 1
+#define IS_INTERMEDIATE_ROUTER  (UIP_CONF_ROUTER && 0)// FOR INTERMEDIATE ROUTERS: 1, FOR NODES: 0 -> UIP_CONF_ROUTER MUST BE 1
 
 #define IS_BORDER_ROUTER (UIP_CONF_ROUTER && !IS_INTERMEDIATE_ROUTER)
 

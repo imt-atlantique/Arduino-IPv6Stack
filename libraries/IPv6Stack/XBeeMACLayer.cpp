@@ -4,7 +4,7 @@
  This class implements the methods defined by the MACLayer interface. It is developed to use the XBee Series 1 module.
  
  created 29 June 2012
- by Alejandro Lampropulos
+ by Alejandro Lampropulos (alejandro.lampropulos@telecom-bretagne.eu)
  Telecom Bretagne Rennes, France
  
  Copyright (c) 2012, Telecom Bretagne Rennes, France.
@@ -36,7 +36,6 @@
  
  */
 #include "XBeeMACLayer.h"
-//#include "NewSoftSerial.h"
 
 #define DEBUG DEBUG_NONE
 #include "uip_debug.h"

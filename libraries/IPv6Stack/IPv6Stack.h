@@ -4,7 +4,7 @@
  This class represents the IPv6 stack (ip, udp, rpl) which needs the implemetation of the link layer to send and receive packets
  
  created 29 June 2012
- by Alejandro Lampropulos
+ by Alejandro Lampropulos (alejandro.lampropulos@telecom-bretagne.eu)
  Telecom Bretagne Rennes, France
  
  Copyright (c) 2012, Telecom Bretagne Rennes, France.

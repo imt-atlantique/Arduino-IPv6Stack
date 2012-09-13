@@ -106,7 +106,7 @@ typedef unsigned char process_event_t;
 
 /*-------------------------------------------------------------------------------------------------------*/
 
-#define UIP_CONF_ROUTER        1 //0 FOR NODES, 1 FOR ROUTERS (BE A ROUTER OR NOT)
+#define UIP_CONF_ROUTER        0 //0 FOR NODES, 1 FOR ROUTERS (BE A ROUTER OR NOT)
 
 #define UIP_CONF_IPV6_RPL      1 //0 WITHOUT RPL, 1 WITH RPL
 

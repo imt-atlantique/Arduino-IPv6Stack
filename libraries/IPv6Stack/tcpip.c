@@ -414,7 +414,7 @@ eventhandler(int ev, void *data)
         if(data == &uip_ds6_timer_periodic &&
            etimer_expired(&uip_ds6_timer_periodic)){
           uip_ds6_periodic();
-          PRINTF("ABOUT TO DO PERIODIC");
+          //PRINTF("ABOUT TO DO PERIODIC");
           tcpip_ipv6_output();
         }
 #endif /* UIP_CONF_IPV6 */
