@@ -34,6 +34,9 @@
  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  SUCH DAMAGE.
  
+ This work has been partly funded by French Agence Nationale de la Recherche
+ under contract ANR-09-VERS-017 ARESA2
+ 
  */
 #ifndef IPV6STACK_H
 #define IPV6STACK_H
