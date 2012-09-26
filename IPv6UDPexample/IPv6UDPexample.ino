@@ -50,7 +50,9 @@
    If they get a prefix from a DIO, they change the prefix of the source ip address of the message received and they send it to that address, inverted.
    This allows to see the routing of the router nodes.
    In case the device is an intermediate router, it will not send broadcast messages but it will answer to received messages (only if it has already got a prefix)
-   In case the device is a border router (root of the DoDAG), it will never send messages or answer to them, but it sets a hardcoded prefix used for the network.   
+   In case the device is a border router (root of the DoDAG), it will never send messages or answer to them, but it sets a hardcoded prefix used for the network.
+
+   This work has been partly funded by French Agence Nationale de la Recherche under contract ANR-09-VERS-017 ARESA2
  ---------------------------------------------------------------------------------------------------------------------------------------------------------------*/
  
 #include <IPv6Stack.h>
