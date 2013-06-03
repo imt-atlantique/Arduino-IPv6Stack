@@ -15,13 +15,17 @@ Features
 * IP network stack with low-power standards : [6LoWPAN](http://datatracker.ietf.org/wg/6lowpan/charter/), [RPL](http://tools.ietf.org/html/rfc6550), and [CoAP](http://datatracker.ietf.org/doc/draft-ietf-core-coap/)
 * Compatible with [Arduino MEGA](http://arduino.cc/en/Main/ArduinoBoardMega2560) family
 * Based on [Contiki OS](http://www.contiki-os.org/) network stack
-* Can be used on top of [IEEE 802.15.4](http://www.digi.com/products/wireless-wired-embedded-solutions/zigbee-rf-modules/point-multipoint-rfmodules/xbee-series1-module), IEEE 802.3 (Ethernet), IEEE 802.11 (Wifi) MAC layers. We are only providing [XBee Series 1](http://www.digi.com/products/wireless-wired-embedded-solutions/zigbee-rf-modules/point-multipoint-rfmodules/xbee-series1-module) interface for now.
+* Can be used on top of [IEEE 802.15.4](http://www.digi.com/products/wireless-wired-embedded-solutions/zigbee-rf-modules/point-multipoint-rfmodules/xbee-series1-module), IEEE 802.3 (Ethernet), IEEE 802.11 (Wifi) MAC layers *
+
+*: We are only providing [XBee Series 1](http://www.digi.com/products/wireless-wired-embedded-solutions/zigbee-rf-modules/point-multipoint-rfmodules/xbee-series1-module) interface for now.
 
 Get Started
 -----------
 
 To get started using µIPv6 stack, go to the [wiki](https://github.com/telecombretagne/Arduino-IPv6Stack/wiki). The wiki
-contains a step-by-step tutorial and examples necessary to get you started.
+contains a step-by-step tutorial and examples necessary to build your first Arduino Wireless Sensor Network.
+
+![Arduino WSN](http://departements.telecom-bretagne.eu/data/rsm/heterogeneous%20wsn%20arch.png)
 
 
 License
