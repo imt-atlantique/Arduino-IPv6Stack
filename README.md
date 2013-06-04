@@ -5,6 +5,8 @@ An IPv6 stack for [Arduinos](http://www.arduino.cc/) MEGA and [Xbee](http://www.
 based on [Contiki OS](http://www.contiki-os.org/) network stack. µIPv6 has been created because
 we think Arduino is a good prototyping platform and because Arduino has to be IPv6 ready.
 
+If you are looking for **Arduino UNO** IPv6 stack, please have a look at our [Arduino pico IPv6](https://github.com/telecombretagne/Arduino-pIPv6Stack) project !
+
 ![Arduino µIPv6 Stack](http://departements.telecom-bretagne.eu/data/rsm/stack%20diagram.png)
 
 
