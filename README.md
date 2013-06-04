@@ -41,6 +41,6 @@ People
 
 [Alejandro Lampropulos](alejandro.lampropulos@telecom-bretagne.eu) (Télecom Bretagne, RSM dpt) : *project maintainer*
 
-[Baptiste Gaultier](baptiste.gaultier@telecom-bretagne.eu) (Télecom Bretagne, RSM dpt) : *documentation*
+[Baptiste Gaultier](baptiste.gaultier@telecom-bretagne.eu) (Télecom Bretagne, RSM dpt) : *developer and documentation maintainer*
 
 [Laurent Toutain](Laurent.Toutain@telecom-bretagne.eu) (Télecom Bretagne, RSM dpt) : *associate professor and project lead*
