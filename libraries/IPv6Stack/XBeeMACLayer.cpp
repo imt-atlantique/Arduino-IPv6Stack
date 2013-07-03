@@ -1,6 +1,5 @@
 
 #include "XBeeMACLayer.h"
-//#include "NewSoftSerial.h"
 
 #define DEBUG DEBUG_NONE
 #include "uip_debug.h"

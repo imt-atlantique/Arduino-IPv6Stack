@@ -121,15 +121,16 @@ void IPv6Stack::addAddress(IPv6Address &address){
 
 #if UIP_CONF_ROUTER
 void IPv6Stack::setPrefix(IPv6Address &prefix, uint8_t prefix_length)
-{  
+{
+	uip_ipaddr_t ipaddr;
+	memcpy(&ipaddr, &prefix.address, 16);
+	uip_ds6_set_addr_iid(&ipaddr, &uip_lladdr);
     #if !UIP_CONF_IPV6_RPL
-      uip_ipaddr_t ipaddr;
-      memcpy(&ipaddr, &prefix.address, 16);
-      uip_ds6_set_addr_iid(&ipaddr, &uip_lladdr);
       uip_ds6_addr_add(&ipaddr, 0, ADDR_AUTOCONF);
       uip_ds6_prefix_add(&prefix.address, prefix_length, 1, UIP_ND6_RA_FLAG_AUTONOMOUS, UIP_ND6_INFINITE_LIFETIME, 0);  
     #else /* UIP_CONF_IPV6_RPL */
-      uip_ds6_set_addr_iid(&prefix.address, &uip_lladdr);
+	  uip_ds6_addr_add(&ipaddr, 0, ADDR_MANUAL);
+	  uip_ds6_set_addr_iid(&prefix.address, &uip_lladdr);
       rpl_dag_t *dag;
       rpl_set_root((uip_ip6addr_t *)&prefix.address);
       dag = rpl_get_dag(RPL_ANY_INSTANCE);

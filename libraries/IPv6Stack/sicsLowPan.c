@@ -266,6 +266,7 @@ addr_contexts[SICSLOWPAN_CONF_MAX_ADDR_CONTEXTS];
 
 /** pointer to an address context. */
 static struct sicslowpan_addr_context *context;
+static struct sicslowpan_addr_context *otherContext;
 
 /** pointer to the byte where to write next inline field. */
 static uint8_t *hc06_ptr;
@@ -318,6 +319,23 @@ addr_context_lookup_by_prefix(uip_ipaddr_t *ipaddr)
   }
 #endif /* SICSLOWPAN_CONF_MAX_ADDR_CONTEXTS > 0 */
   return NULL;
+}
+/*--------------------------------------------------------------------*/
+/** \brief find the context corresponding to multicast prefix ipaddr */
+static struct sicslowpan_addr_context*
+addr_context_lookup_by_multicast_prefix(uip_ipaddr_t *ipaddr)
+{
+	/* Remove code to avoid warnings and save flash if no context is used */
+#if SICSLOWPAN_CONF_MAX_ADDR_CONTEXTS > 0
+	int i;
+	for(i = 0; i < SICSLOWPAN_CONF_MAX_ADDR_CONTEXTS; i++) {
+		if(addr_contexts[i].used && addr_contexts[i].used == ipaddr->u8[3]){//addr_contexts[i].used stores the prefix length
+			if (uip_ipaddr_prefixcmp(&addr_contexts[i].prefix, &(ipaddr->u8[4]), addr_contexts[i].used))
+				return &addr_contexts[i];
+		}
+	}
+#endif /* SICSLOWPAN_CONF_MAX_ADDR_CONTEXTS > 0 */
+	return NULL;
 }
 /*--------------------------------------------------------------------*/
 /** \brief find the context with the given number */
@@ -465,16 +483,25 @@ compress_hdr_hc06(rimeaddr_t *rime_destaddr/*, uint8_t* uip_buf_ptr, uip_lladdr_
    */
 
 
-  /* check if dest context exists (for allocating third byte) */
-  /* TODO: fix this so that it remembers the looked up values for
-     avoiding two lookups - or set the lookup values immediately */
-  if(addr_context_lookup_by_prefix(&(UIP_IP_BUF->destipaddr)) != NULL ||
-     addr_context_lookup_by_prefix(&(UIP_IP_BUF->srcipaddr)) != NULL) {
-    /* set context flag and increase hc06_ptr */
-    PRINTF("IPHC: compressing dest or src ipaddr - setting CID");
-    iphc1 |= SICSLOWPAN_IPHC_CID;
-    hc06_ptr++;
-  }
+	/* check if dest context exists (for allocating third byte) */
+	if((context = addr_context_lookup_by_prefix(&(UIP_IP_BUF->destipaddr))) != NULL &&
+	   (otherContext = addr_context_lookup_by_prefix(&(UIP_IP_BUF->srcipaddr))) != NULL) {
+		if (context->number == 0 && otherContext->number == 0){
+			//PRINTF("IPHC: compressing dest or src ipaddr - not setting CID because contexts are the ZERO CONTEXT for src AND dst!");
+		}else{
+			//at least one of them is not ZERO CONTEXT and exists, put the third byte of the IPHC
+		  	/* set context flag and increase hc06_ptr */
+			//PRINTF("IPHC: compressing dest and src ipaddr - setting CID");
+			iphc1 |= SICSLOWPAN_IPHC_CID;
+			hc06_ptr++;
+		}
+	}else if (context != NULL || otherContext != NULL){
+		//at least one of them is not ZERO CONTEXT and exists, put the third byte of the IPHC
+		/* set context flag and increase hc06_ptr */
+		//PRINTF("IPHC: compressing dest or src ipaddr - setting CID");
+		iphc1 |= SICSLOWPAN_IPHC_CID;
+		hc06_ptr++;
+	}
 
   /*
    * Traffic class, flow label
@@ -501,24 +528,25 @@ compress_hdr_hc06(rimeaddr_t *rime_destaddr/*, uint8_t* uip_buf_ptr, uip_lladdr_
       hc06_ptr += 1;
     }
   } else {
-    /* Flow label cannot be compressed */
-    if(((UIP_IP_BUF->vtc & 0x0F) == 0) &&
-       ((UIP_IP_BUF->tcflow & 0xF0) == 0)) {
-      /* compress only traffic class */
-      iphc0 |= SICSLOWPAN_IPHC_TC_C;
-      *hc06_ptr = (tmp & 0xc0) |
-        (UIP_IP_BUF->tcflow & 0x0F);
-      memcpy(hc06_ptr + 1, &UIP_IP_BUF->flow, 2);
-      hc06_ptr += 3;
-    } else {
-      /* compress nothing */
-      memcpy(hc06_ptr, &UIP_IP_BUF->vtc, 4);
-      /* but replace the top byte with the new ECN | DSCP format*/
-      *hc06_ptr = tmp;
-      hc06_ptr += 4;
-   }
+	  /* Flow label cannot be compressed */
+	  if(((UIP_IP_BUF->vtc & 0x0F) == 0) &&
+		 ((UIP_IP_BUF->tcflow & 0xC0) == 0)) {
+		  /* compress only traffic class (DSCP) */
+		  iphc0 |= SICSLOWPAN_IPHC_TC_C;
+		  *hc06_ptr = (tmp & 0xc0) |
+		  (UIP_IP_BUF->tcflow & 0x0F);
+		  memcpy(hc06_ptr + 1, &UIP_IP_BUF->flow, 2);
+		  hc06_ptr += 3;
+	  } else {
+		  /* compress nothing */
+		  memcpy(hc06_ptr, &UIP_IP_BUF->vtc, 4);
+		  //set 0 in the rsv section
+		  hc06_ptr[1] = hc06_ptr[1] & 0x0F;
+		  /* replace the top byte with the new ECN | DSCP format*/
+		  *hc06_ptr = tmp;
+		  hc06_ptr += 4;
+	  }
   }
-
   /* Note that the payload length is always compressed */
 
   /* Next header. We compress it if UDP */
@@ -567,12 +595,14 @@ compress_hdr_hc06(rimeaddr_t *rime_destaddr/*, uint8_t* uip_buf_ptr, uip_lladdr_
     iphc1 |= SICSLOWPAN_IPHC_SAM_00;
   } else if((context = addr_context_lookup_by_prefix(&UIP_IP_BUF->srcipaddr))
      != NULL) {
-    /* elide the prefix - indicate by CID and set context + SAC */
-    PRINTF("IPHC: compressing src with context - setting CID & SAC ctx: Xd");//, context->number);
-    iphc1 |= SICSLOWPAN_IPHC_CID | SICSLOWPAN_IPHC_SAC;
-    RIME_IPHC_BUF[2] |= context->number << 4;
-    /* compession compare with this nodes address (source) */
-
+	  /* elide the prefix - indicate by CID and set context + SAC */
+	  //PRINTF("IPHC: compressing src with context - setting CID (if corresponds) & SAC ctx: Xd");//, context->number);
+	  iphc1 |= SICSLOWPAN_IPHC_SAC;
+	  
+	  if (iphc1 & SICSLOWPAN_IPHC_CID){//This means that src and dst contexts are not the ZERO CONTEXT (both)
+		  RIME_IPHC_BUF[2] |= context->number << 4;
+	  }
+	  /* compression compare with this nodes address (source) */
     iphc1 |= compress_addr_64(SICSLOWPAN_IPHC_SAM_BIT,
                               &UIP_IP_BUF->srcipaddr, &uip_lladdr);
     /* No context found for this address */
@@ -585,7 +615,7 @@ compress_hdr_hc06(rimeaddr_t *rime_destaddr/*, uint8_t* uip_buf_ptr, uip_lladdr_
   } else {
     /* send the full address => SAC = 0, SAM = 00 */
     iphc1 |= SICSLOWPAN_IPHC_SAM_00; /* 128-bits */
-    memcpy(hc06_ptr, &UIP_IP_BUF->srcipaddr.u16[0], 16);
+    memcpy(hc06_ptr, &UIP_IP_BUF->srcipaddr.u8[0], 16);
     hc06_ptr += 16;
   }
 
@@ -593,35 +623,47 @@ compress_hdr_hc06(rimeaddr_t *rime_destaddr/*, uint8_t* uip_buf_ptr, uip_lladdr_
   if(uip_is_addr_mcast(&UIP_IP_BUF->destipaddr)) {
     /* Address is multicast, try to compress */
     iphc1 |= SICSLOWPAN_IPHC_M;
-    if(sicslowpan_is_mcast_addr_compressable8(&UIP_IP_BUF->destipaddr)) {
-      iphc1 |= SICSLOWPAN_IPHC_DAM_11;
-      /* use last byte */
-      *hc06_ptr = UIP_IP_BUF->destipaddr.u8[15];
-      hc06_ptr += 1;
-    } else if(sicslowpan_is_mcast_addr_compressable32(&UIP_IP_BUF->destipaddr)) {
-      iphc1 |= SICSLOWPAN_IPHC_DAM_10;
-      /* second byte + the last three */
-      *hc06_ptr = UIP_IP_BUF->destipaddr.u8[1];
-      memcpy(hc06_ptr + 1, &UIP_IP_BUF->destipaddr.u8[13], 3);
-      hc06_ptr += 4;
-    } else if(sicslowpan_is_mcast_addr_compressable48(&UIP_IP_BUF->destipaddr)) {
-      iphc1 |= SICSLOWPAN_IPHC_DAM_01;
-      /* second byte + the last five */
-      *hc06_ptr = UIP_IP_BUF->destipaddr.u8[1];
-      memcpy(hc06_ptr + 1, &UIP_IP_BUF->destipaddr.u8[11], 5);
-      hc06_ptr += 6;
-    } else {
-      iphc1 |= SICSLOWPAN_IPHC_DAM_00;
-      /* full address */
-      memcpy(hc06_ptr, &UIP_IP_BUF->destipaddr.u8[0], 16);
-      hc06_ptr += 16;
-    }
+	  //See if it is a Unicast-Prefix-based IPv6 Multicast Address
+	  if((context = addr_context_lookup_by_multicast_prefix(&UIP_IP_BUF->destipaddr)) != NULL) {
+		  iphc1 |= SICSLOWPAN_IPHC_DAC | SICSLOWPAN_IPHC_DAM_00; //Only case supported
+		  //The address is like: ffXX:XXLL:PPPP:PPPP:PPPP:PPPP:XXXX:XXXX
+		  //put second and third byte + last four
+		  memcpy(hc06_ptr, &UIP_IP_BUF->destipaddr.u8[1], 2);
+		  memcpy(hc06_ptr + 2, &UIP_IP_BUF->destipaddr.u8[12], 4);
+		  hc06_ptr += 6;
+	  }else{
+		  if(sicslowpan_is_mcast_addr_compressable8(&UIP_IP_BUF->destipaddr)) {
+			  iphc1 |= SICSLOWPAN_IPHC_DAM_11;
+			  /* use last byte */
+			  *hc06_ptr = UIP_IP_BUF->destipaddr.u8[15];
+			  hc06_ptr += 1;
+		  } else if(sicslowpan_is_mcast_addr_compressable32(&UIP_IP_BUF->destipaddr)) {
+			  iphc1 |= SICSLOWPAN_IPHC_DAM_10;
+			  /* second byte + the last three */
+			  *hc06_ptr = UIP_IP_BUF->destipaddr.u8[1];
+			  memcpy(hc06_ptr + 1, &UIP_IP_BUF->destipaddr.u8[13], 3);
+			  hc06_ptr += 4;
+		  } else if(sicslowpan_is_mcast_addr_compressable48(&UIP_IP_BUF->destipaddr)) {
+			  iphc1 |= SICSLOWPAN_IPHC_DAM_01;
+			  /* second byte + the last five */
+			  *hc06_ptr = UIP_IP_BUF->destipaddr.u8[1];
+			  memcpy(hc06_ptr + 1, &UIP_IP_BUF->destipaddr.u8[11], 5);
+			  hc06_ptr += 6;
+		  } else {
+			  iphc1 |= SICSLOWPAN_IPHC_DAM_00;
+			  /* full address */
+			  memcpy(hc06_ptr, &UIP_IP_BUF->destipaddr.u8[0], 16);
+			  hc06_ptr += 16;
+		  }
+	  }
   } else {
     /* Address is unicast, try to compress */
     if((context = addr_context_lookup_by_prefix(&UIP_IP_BUF->destipaddr)) != NULL) {
       /* elide the prefix */
       iphc1 |= SICSLOWPAN_IPHC_DAC;
-      RIME_IPHC_BUF[2] |= context->number;
+		if (iphc1 & SICSLOWPAN_IPHC_CID){//This means that src and dst contexts are not the ZERO CONTEXT (both)
+			RIME_IPHC_BUF[2] |= context->number;
+		}
       /* compession compare with link adress (destination) */
 
       iphc1 |= compress_addr_64(SICSLOWPAN_IPHC_DAM_BIT,
@@ -636,7 +678,7 @@ compress_hdr_hc06(rimeaddr_t *rime_destaddr/*, uint8_t* uip_buf_ptr, uip_lladdr_
     } else {
       /* send the full address */
       iphc1 |= SICSLOWPAN_IPHC_DAM_00; /* 128-bits */
-      memcpy(hc06_ptr, &UIP_IP_BUF->destipaddr.u16[0], 16);
+      memcpy(hc06_ptr, &UIP_IP_BUF->destipaddr.u8[0], 16);
       hc06_ptr += 16;
     }
   }
@@ -828,7 +870,35 @@ uncompress_hdr_hc06(uint16_t ip_len, uip_lladdr_t *uip_lladdr_sender, uip_lladdr
   if(iphc1 & SICSLOWPAN_IPHC_M) {
     /* context based multicast compression */
     if(iphc1 & SICSLOWPAN_IPHC_DAC) {
-      /* TODO: implement this */
+    	if (iphc1<<6){//Last two bits must be SICSLOWPAN_IPHC_DAM_00
+    		//Not supported
+    		////PRINTF("sicslowpan uncompress_hdr: error DAM must be 00 if M=1 and DAC=1. Only supported case");
+    		return 0;
+    	}
+        uint8_t dci = (iphc1 & SICSLOWPAN_IPHC_CID) ? RIME_IPHC_BUF[2] & 0x0f : 0;
+		context = addr_context_lookup_by_number(dci);
+		
+		/* all valid cases below need the context! */
+		if(context == NULL) {
+			////PRINTF("sicslowpan uncompress_hdr: error context not found in multicast context based decompression");
+			return 0;
+		}
+		//The address is like: ffXX:XXLL:PPPP:PPPP:PPPP:PPPP:XXXX:XXXX
+		//Take the second and third bytes from the compressed packet received
+		memcpy(&(SICSLOWPAN_IP_BUF->destipaddr.u8[1]), hc06_ptr, 2);
+		//Put the length of the prefix in the forth byte
+		SICSLOWPAN_IP_BUF->destipaddr.u8[3] = context->used;//this field is used for the prefix length
+		//Put the complete prefix then
+		memcpy(&(SICSLOWPAN_IP_BUF->destipaddr.u8[4]), context->prefix, context->used);
+		//Put zeros in the end if needed (in case prefix length is less than 64 bits = 8 bytes)
+		uint8_t i;
+		for(i=(context->used>>3); i<8; ++i){
+			SICSLOWPAN_IP_BUF->destipaddr.u8[4+i] = 0;
+		}
+		//Take the last four bytes from the compressed packet received
+		memcpy(&(SICSLOWPAN_IP_BUF->destipaddr.u8[1]), hc06_ptr+2, 4);
+		hc06_ptr += 6;
+		
     } else {
       /* non-context based multicast compression - */
       /* DAM_00: 128 bits  */
