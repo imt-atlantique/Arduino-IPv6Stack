@@ -42,8 +42,8 @@
 #define IPV6STACK_H
 
 extern "C" {  
-    #include <inttypes.h>
-    #include "uip.h"
+    #include <inttypes.h>    
+	#include "uip.h"
     #include "simple_udp.h"
 }    
 
@@ -71,6 +71,8 @@ class IPv6Stack
     static uint16_t sender_port;
     static IPv6llAddress ll_destination_address;
     static IPv6llAddress ll_source_address;
+	
+	static uint8_t count;
               
   public:
     
@@ -104,6 +106,8 @@ class IPv6Stack
     static int getUdpSenderPort();
 	//Copies the IP address of the sender of the last received UDP message
     static void getUdpSenderIpAddress(IPv6Address &address);
+	//Sends a PING (ICMPv6 Echo request) message to the specified address
+	static void ping(IPv6Address &destination, uint8_t datalength);
 };	
 
 		

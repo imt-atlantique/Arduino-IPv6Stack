@@ -131,6 +131,8 @@ uip_icmp6_error_output(u8_t type, u8_t code, u32_t param);
 void
 uip_icmp6_send(uip_ipaddr_t *dest, int type, int code, int payload_len);
 
+void
+uip_icmp6_echo_request_output(uip_ipaddr_t *dest, uint8_t payload_len); 
 
 /** @} */
 

@@ -122,11 +122,7 @@ uip_ds6_init(void)
 #endif /* UIP_CONF_ROUTER */
   uip_ds6_set_addr_iid(&loc_fipaddr, &uip_lladdr);  
   uip_ds6_addr_add(&loc_fipaddr, 0, ADDR_AUTOCONF);
-<<<<<<< HEAD
   //uip_ds6_addr_add_preferred(&loc_fipaddr, 0, ADDR_AUTOCONF);// CHANGED ALE
-=======
-  //uip_ds6_addr_add_preferred(&loc_fipaddr, 0, ADDR_AUTOCONF);// CHANGED ALLE
->>>>>>> 18ad24f25453177be5ae79fdc618b7f5513baed0
 
   uip_create_linklocal_allnodes_mcast(&loc_fipaddr);
   uip_ds6_maddr_add(&loc_fipaddr);

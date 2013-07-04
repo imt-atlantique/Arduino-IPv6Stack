@@ -213,5 +213,45 @@ uip_icmp6_send(uip_ipaddr_t *dest, int type, int code, int payload_len)
   tcpip_ipv6_output();
 }
 /*---------------------------------------------------------------------------*/
+uint8_t ping_count = 0;
+
+void
+uip_icmp6_echo_request_output(uip_ipaddr_t *dest, uint8_t payload_len){
+	UIP_IP_BUF->vtc = 0x60;
+	UIP_IP_BUF->tcflow = 1;
+	UIP_IP_BUF->flow = 0;
+	UIP_IP_BUF->proto = UIP_PROTO_ICMP6;
+	UIP_IP_BUF->ttl = uip_ds6_if.cur_hop_limit;
+	uip_ipaddr_copy(&UIP_IP_BUF->destipaddr, dest);
+	uip_ipaddr_copy(&UIP_IP_BUF->srcipaddr, &uip_ds6_get_link_local(-1)->ipaddr);
+	
+	UIP_ICMP_BUF->type = ICMP6_ECHO_REQUEST;
+	UIP_ICMP_BUF->icode = 0;
+	/* set identifier and sequence number to 0 */
+	memset((uint8_t *)UIP_ICMP_BUF + UIP_ICMPH_LEN, 0, 4);
+	/* put one byte of data */
+	memset((uint8_t *)UIP_ICMP_BUF + UIP_ICMPH_LEN + UIP_ICMP6_ECHO_REQUEST_LEN,
+		   ping_count, payload_len);
+	
+	
+	uip_len = UIP_ICMPH_LEN + UIP_ICMP6_ECHO_REQUEST_LEN + UIP_IPH_LEN + payload_len;
+	UIP_IP_BUF->len[0] = (uint8_t)((uip_len - UIP_IPH_LEN) >> 8);
+	UIP_IP_BUF->len[1] = (uint8_t)((uip_len - UIP_IPH_LEN) & 0x00FF);
+	
+	UIP_ICMP_BUF->icmpchksum = 0;
+	UIP_ICMP_BUF->icmpchksum = ~uip_icmp6chksum();
+	
+	
+	PRINTF("Sending Echo Request to");
+	PRINT6ADDR(&UIP_IP_BUF->destipaddr);
+	PRINTF("from");
+	PRINT6ADDR(&UIP_IP_BUF->srcipaddr);
+	PRINTF("\n");
+	UIP_STAT(++uip_stat.icmp.sent);
+	
+	tcpip_ipv6_output();
+	
+	ping_count++;	
+}
 
 /** @} */
