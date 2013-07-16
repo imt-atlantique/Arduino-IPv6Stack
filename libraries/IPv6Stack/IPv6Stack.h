@@ -107,7 +107,7 @@ class IPv6Stack
 	//Copies the IP address of the sender of the last received UDP message
     static void getUdpSenderIpAddress(IPv6Address &address);
 	//Sends a PING (ICMPv6 Echo request) message to the specified address
-	static void ping(IPv6Address &destination, uint8_t datalength);
+	static void ping(IPv6Address &destination, uint8_t datalength, uint8_t hop_limit = 0);
 };	
 
 		

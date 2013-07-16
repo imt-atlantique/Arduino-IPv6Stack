@@ -67,3 +67,7 @@ IPv6Address& IPv6Address::operator=(IPv6Address const &addr){
   uip_ipaddr_copy(&address, &addr.address);
   return *this;
 }
+
+void IPv6Address::setAddress(uint16_t addr1, uint16_t addr2, uint16_t addr3, uint16_t addr4, uint16_t addr5, uint16_t addr6, uint16_t addr7, uint16_t addr8){
+	uip_ip6addr(&address, addr1,addr2,addr3,addr4,addr5,addr6,addr7,addr8);
+}

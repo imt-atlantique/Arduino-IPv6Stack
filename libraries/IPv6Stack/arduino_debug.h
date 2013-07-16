@@ -3,6 +3,8 @@
 
 #define ARDUINO_DEBUG 1
 
+#define SERIAL Serial1
+
 #ifdef __cplusplus
   extern "C" {
 #else

@@ -131,8 +131,15 @@ uip_icmp6_error_output(u8_t type, u8_t code, u32_t param);
 void
 uip_icmp6_send(uip_ipaddr_t *dest, int type, int code, int payload_len);
 
+/**
+ * \brief Send an icmpv6 echo request message
+ * \param dest destination address of the message
+ * \param payload_len length of the payload
+ * \param hop_limit hop limit value of the IPv6 packet (if this value is 0, interface's hop limit value is used)
+ */
 void
-uip_icmp6_echo_request_output(uip_ipaddr_t *dest, uint8_t payload_len); 
+uip_icmp6_echo_request_output(uip_ipaddr_t *dest, uint8_t payload_len, uint8_t hop_limit); 
+
 
 /** @} */
 

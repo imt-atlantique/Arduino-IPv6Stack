@@ -211,6 +211,6 @@ void IPv6Stack::getUdpSenderIpAddress(IPv6Address &address){
   address.address = *IPv6Stack::sender_addr;
 }
 
-void IPv6Stack::ping(IPv6Address &dest, uint8_t datalength){
-	uip_icmp6_echo_request_output(&dest.address, datalength);
+void IPv6Stack::ping(IPv6Address &dest, uint8_t datalength, uint8_t hop_limit){
+	uip_icmp6_echo_request_output(&dest.address, datalength, hop_limit);
 }

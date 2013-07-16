@@ -54,6 +54,7 @@ class IPv6Address{
     void print();
     uint16_t getAddressValue(uint8_t pos);//pos goes between 0 and 7
     void setAddressValue(uint16_t value, uint8_t pos);//pos goes between 0 and 7
+	void setAddress(uint16_t addr0, uint16_t addr1, uint16_t addr2, uint16_t addr3, uint16_t addr4, uint16_t addr5, uint16_t addr6, uint16_t addr7);
     IPv6Address& operator=(IPv6Address const &addr);
 };
 

@@ -108,7 +108,7 @@ typedef unsigned char process_event_t;
 
 #define UIP_CONF_ROUTER        0 //0 FOR NODES, 1 FOR ROUTERS (BE A ROUTER OR NOT)
 
-#define UIP_CONF_IPV6_RPL      1 //0 WITHOUT RPL, 1 WITH RPL
+#define UIP_CONF_IPV6_RPL      0 //0 WITHOUT RPL, 1 WITH RPL
 
 #define UIP_CONF_ND6_SEND_RA   0 //0 FOR NODES, 1 FOR ROUTERS (SELECT TO SEND ROUTER ADVERTISEMENT OR NOT)
 
@@ -160,7 +160,7 @@ typedef unsigned char process_event_t;
 #else /* WITH_UIP6 */
 
 #define UIP_CONF_IP_FORWARD      0
-#define UIP_CONF_BUFFER_SIZE     108
+#define UIP_CONF_BUFFER_SIZE     128
 
 #endif /* WITH_UIP6 */
 
