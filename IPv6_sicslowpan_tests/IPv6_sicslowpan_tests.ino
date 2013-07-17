@@ -230,7 +230,7 @@ void establishContact() {
 void setup(){  
   SERIAL.begin(9600);
   delay(1000);
-  establishContact();
+  //establishContact();
   SERIAL.println();
   SERIAL.print("MEMORY LEFT:");
   SERIAL.println(mem());

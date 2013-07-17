@@ -106,9 +106,9 @@ typedef unsigned char process_event_t;
 
 /*-------------------------------------------------------------------------------------------------------*/
 
-#define UIP_CONF_ROUTER        0 //0 FOR NODES, 1 FOR ROUTERS (BE A ROUTER OR NOT)
+#define UIP_CONF_ROUTER        1 //0 FOR NODES, 1 FOR ROUTERS (BE A ROUTER OR NOT)
 
-#define UIP_CONF_IPV6_RPL      0 //0 WITHOUT RPL, 1 WITH RPL
+#define UIP_CONF_IPV6_RPL      1 //0 WITHOUT RPL, 1 WITH RPL
 
 #define UIP_CONF_ND6_SEND_RA   0 //0 FOR NODES, 1 FOR ROUTERS (SELECT TO SEND ROUTER ADVERTISEMENT OR NOT)
 
@@ -156,6 +156,8 @@ typedef unsigned char process_event_t;
 #endif /* SICSLOWPAN_CONF_MAX_MAC_TRANSMISSIONS */
 
 #define SICSLOWPAN_CONF_ADDR_CONTEXT_0 {addr_contexts[0].prefix[0]=0xaa;addr_contexts[0].prefix[1]=0xaa;addr_contexts[0].prefix[2]=0;addr_contexts[0].prefix[3]=0;addr_contexts[0].prefix[4]=0;addr_contexts[0].prefix[5]=0;addr_contexts[0].prefix[6]=0;addr_contexts[0].prefix[7]=0;}
+
+#define SICSLOWPAN_CONF_ADDR_CONTEXT_1 {addr_contexts[1].prefix[0]=0xbb;addr_contexts[1].prefix[1]=0xbb;addr_contexts[1].prefix[2]=0;addr_contexts[1].prefix[3]=0;addr_contexts[1].prefix[4]=0;addr_contexts[1].prefix[5]=0;addr_contexts[1].prefix[6]=0;addr_contexts[1].prefix[7]=0;}
 
 #else /* WITH_UIP6 */
 
