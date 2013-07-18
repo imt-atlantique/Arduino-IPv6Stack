@@ -58,13 +58,16 @@
 #include <string.h>
 #include <stdlib.h>
 
+#define UDP_PORT 5683
+
 #define IS_INTERMEDIATE_ROUTER  (UIP_CONF_ROUTER && 0)// FOR INTERMEDIATE ROUTERS: 1, FOR NODES: 0 -> UIP_CONF_ROUTER MUST BE 1
 
 #define IS_BORDER_ROUTER (UIP_CONF_ROUTER && !IS_INTERMEDIATE_ROUTER)
 
-#define UDP_PORT 8765
-
-#define SEND_INTERVAL		(10 * 1000)// 10 seconds
+enum CommandType{
+  IP_PING,
+  COAP_PING
+};
 
 //This function calculates the RAM memory left
 int mem(){
@@ -78,10 +81,6 @@ int mem(){
 
 //We need a specific object to implement the MACLayer interface (the virtual methods). In this case we use XBee but could be anyone capable of implementing that interface
 XBeeMACLayer macLayer;
-
-//We use a buffer in order to put the data that we will send
-#define UDP_MAX_DATA_LEN 100
-char udp_send[UDP_MAX_DATA_LEN];
 
 //This will be the destination IP address
 IPv6Address addr_dest;
@@ -97,52 +96,26 @@ IPv6Address ping_addr_dest;
 //We use a timer in order to send data if we do not have to respond to a message received.
 IPv6Timer send_timer;
 
-char udp_data[UDP_MAX_DATA_LEN];
+char udp_data[50];
 int udp_data_length = 0;
 IPv6Address sender_address;
-uint16_t dest_port = UDP_PORT;
-
-//changes the /64 prefix of the given address to the value of the prefix that was given to us by a router (if any). Returns true if we have an address with a prefix like this and false if we did not get a prefix and thus a global address
-bool change_addr_prefix(IPv6Address &address){
-  IPv6Address globalAddress;
-  if (IPv6Stack::getGlobalPreferredAddress(globalAddress)){//we get our global address' prefix, given by our router, to send the response to the sender using global addresses (this will allow us to see routing)
-    address.setAddressValue(globalAddress.getAddressValue(0), 0);
-    address.setAddressValue(globalAddress.getAddressValue(1), 1);
-    address.setAddressValue(globalAddress.getAddressValue(2), 2);
-    address.setAddressValue(globalAddress.getAddressValue(3), 3);
-    return true;
-  }
-  return false;
-}
-
-      /*
-      while ((str = strtok_r(address, ":", &address)) != NULL){
-        SERIAL.println(str);
-        
-        if (strlen(str)){
-          addr[i] = (u16_t) strtoul(str, NULL, 16);          
-        }else{
-          //if there is no length, that means that there are zeros here, we reached the prefix index
-          prefix_idx = i;
-        }
-        ++i;
-      }
-      
-      for(int j=7; j>0; j--){
-          i--;
-          if (i > prefix_idx){
-            addr[j] = addr[i];            
-          }else{
-            if (j >= prefix_idx){
-               addr[j] = 0;
-            }
-          }        
-      }
-      */
+uint16_t dest_port;
 
 #define COMMAND_MAX_BYTES 100
 char buffer_command[COMMAND_MAX_BYTES];
 u16_t addr[8];
+
+char coap_ping[4] = {0x40, 0x01, 0xbe, 0xbe};
+
+void udp_callback(char *data, int datalen, int sender_port, IPv6Address &sender_addr){
+  //take the message that should have the format: VERSION (2 bits) | TYPE (2 bits) | OC (4 bits) | CODE (8 bits) | MID (16 bits)
+  //we put the VERSION to 1, TYPE to 3, the OC to 0 and the code to 0. We leave the same MID
+  data[0] = 0x70;
+  data[1] = 0;
+  //now we send this to the sender. It is only 4 bytes
+  IPv6Stack::udpSend(sender_addr, sender_port, data, 4);
+  delay(50);
+}
 
 char getIpAddress(char* address, u16_t* addr){
   char* str;  
@@ -157,6 +130,11 @@ char getIpAddress(char* address, u16_t* addr){
   return 0;
 }
 
+void send_coap_ping(IPv6Address& ping_addr_dest, u16_t port){
+  IPv6Stack::udpSend(ping_addr_dest, port, coap_ping, 4);
+  delay(50);
+}
+
 void hostInput()
 {
     char* cmd;
@@ -164,6 +142,8 @@ void hostInput()
     int a = 0;
     u8_t arg_num = 0;
     u8_t hl = 0;
+    u16_t port = 0;
+    CommandType type;
     
     if(SERIAL.available()){
       a = SERIAL.readBytesUntil('\n', buffer_command, COMMAND_MAX_BYTES);
@@ -177,10 +157,16 @@ void hostInput()
         switch(arg_num){
           case 1:
             if(strncmp(arg,"ping6", 5) != 0){
-              SERIAL.println("---");
-              SERIAL.println("invalid command!");
-              SERIAL.println("---");
-              return;
+              if(strncmp(arg,"coaping", 5) != 0){
+                SERIAL.println("---");
+                SERIAL.println("invalid command!");
+                SERIAL.println("---");
+                return;
+              }else{
+                type = COAP_PING; 
+              }
+            }else{
+              type = IP_PING; 
             }
             break;
           case 2:
@@ -197,21 +183,39 @@ void hostInput()
             }
             break;
           case 3:
-            hl = (u8_t) strtoul(arg, NULL, 10);
-            break;
+            if (type == IP_PING){
+              hl = (u8_t) strtoul(arg, NULL, 10);
+              break;
+            }else{
+              if (type == COAP_PING){
+                //get the destination port
+                port = (u16_t) strtoul(arg, NULL, 10);
+                break;
+              } 
+            }
         }
         
       }
       if (arg_num >= 2){
-        IPv6Stack::ping(ping_addr_dest, 4, hl);
-        SERIAL.print("PING ");
-        if (hl){
-          SERIAL.print("(HL=");
-          SERIAL.print(hl);
-          SERIAL.print(") ");
-        }        
-        SERIAL.print("sent to address ");
-        ping_addr_dest.print();     
+        if (type == IP_PING){
+          IPv6Stack::ping(ping_addr_dest, 4, hl);
+          SERIAL.print("PING ");
+          if (hl){
+            SERIAL.print("(HL=");
+            SERIAL.print(hl);
+            SERIAL.print(") ");
+          }        
+          SERIAL.print("sent to address ");
+          ping_addr_dest.print();
+        }else{
+          if (type == COAP_PING){
+            if (port != 0){
+              send_coap_ping(ping_addr_dest, port);
+            }else{
+               SERIAL.print("Port was not specified or incorrect");
+            }
+          }
+        }
       }
     }
 }
@@ -253,12 +257,7 @@ void setup(){
   delay(100);
   
   //If Border Router, set prefix. If not, set a timer to send data
-  #if !IS_BORDER_ROUTER
-      send_timer.set(SEND_INTERVAL);
-      SERIAL.println("SEND TIMER SET");
-      delay(50);      
-  #else
-      //This line is added to specify our prefix    
+  #if IS_BORDER_ROUTER      //This line is added to specify our prefix    
       IPv6Stack::setPrefix(prefix, 64); 
   #endif /*IS_BORDER_ROUTER*/
   
@@ -284,7 +283,7 @@ void loop(){
         udp_data_length = IPv6Stack::getUdpDataLength();
         IPv6Stack::getUdpData(udp_data);
         IPv6Stack::getUdpSenderIpAddress(sender_address);
-        //udp_callback(udp_data, udp_data_length, IPv6Stack::getUdpSenderPort(), sender_address);
+        udp_callback(udp_data, udp_data_length, IPv6Stack::getUdpSenderPort(), sender_address);
       }
 #endif
   }
