@@ -43,6 +43,8 @@
 XBeeMACLayer::XBeeMACLayer(){
 }
 
+// my (16 bits address)
+uint8_t myCmd[] = {'M','Y'};
 // serial high
 uint8_t shCmd[] = {'S','H'};
 // serial low
@@ -60,7 +62,7 @@ AtCommandResponse atResponse = AtCommandResponse();
 #define AT_REQUEST_MAX_ATTEMPTS 20
 
 bool XBeeMACLayer::getResponseMAC(){
-          if (atResponse.getValueLength() == 4) {            
+          if (atResponse.getValueLength() == 4 || atResponse.getValueLength() == 2) {            
             for (int i = 0; i < atResponse.getValueLength(); i++) {
               my_mac.setAddressValue(atResponse.getValue()[i], mac_position++);
             }
@@ -94,7 +96,7 @@ bool XBeeMACLayer::sendAtCommand() {
     //TEMPORARILY, we send the request and wait for the attempt several times until we got it. This is because we can receive other packets that will be placed in the same buffer and they must be ignored until getting our AT response
     for(int i=0; i<AT_RESPONSE_MAX_ATTEMPTS; ++i){
       
-      // wait up to 3 seconds for the status response
+      // wait up to 1 seconds for the status response
       if (xbee.readPacket(1000)) {
         // got a response!
     
@@ -103,7 +105,7 @@ bool XBeeMACLayer::sendAtCommand() {
           xbee.getResponse().getAtCommandResponse(atResponse);
     
           if (atResponse.isOk()) {
-            if (atRequest.getCommand() == shCmd || atRequest.getCommand() == slCmd){
+            if (atRequest.getCommand() == shCmd || atRequest.getCommand() == slCmd || atRequest.getCommand() == myCmd){
               return getResponseMAC();
             }else{
               if (atRequest.getCommand() == ecCmd){
@@ -138,16 +140,23 @@ bool XBeeMACLayer::init(){
     xbee.begin(9600); 
     delay(3000); //wait for the XBEE to initialize
         
-    mac_position = 0;    
-    // get SH
-    if (!sendAtCommand())
-      return false; 
-    // set command to SL
-    atRequest.setCommand(slCmd);
-    // set command to SL
-    atRequest.setCommand(slCmd);  
-    if (!sendAtCommand())
-        return false; 
+    mac_position = 0; 
+	
+	if (UIP_LLADDR_LEN == UIP_802154_SHORTADDR_LEN){
+		// set command to MY
+		atRequest.setCommand(myCmd);
+		if (!sendAtCommand())
+			return false; 
+	}else{
+		// set command to SH
+		atRequest.setCommand(shCmd);
+		if (!sendAtCommand())
+			return false; 
+		// set command to SL
+		atRequest.setCommand(slCmd);  
+		if (!sendAtCommand())
+			return false; 
+	}
     return true;
 }
 
@@ -195,8 +204,8 @@ MACTransmissionStatus XBeeMACLayer::send(const IPv6llAddress& lladdr_dest, uint8
         Tx64Request longReq(destAddr64, data, length);
         xbeeRequest = &longReq;
       }else{
-        ((char*)(&dest))[1] = lladdr_dest.getAddressValue(0);
-        ((char*)(&dest))[0] = lladdr_dest.getAddressValue(1);
+        ((char*)(&dest16))[1] = lladdr_dest.getAddressValue(0);
+        ((char*)(&dest16))[0] = lladdr_dest.getAddressValue(1);
         Tx16Request shortReq(dest16, data, length);
         xbeeRequest = &shortReq;
       }
@@ -289,9 +298,14 @@ bool XBeeMACLayer::receive(IPv6llAddress& lladdr_src, IPv6llAddress& lladdr_dest
                   //get dest address (it is my own)
                   lladdr_dest = my_mac;
                 }
-                
+			  //get sorce address
+			  for(int i=0; i<UIP_LLADDR_LEN; ++i){
+                  lladdr_src.setAddressValue(rx16.getFrameData()[i], i);
+			  }
+			  /*
                 lladdr_src.setAddressValue(rxResp.getRemoteAddress16() >> 8, 0);
                 lladdr_src.setAddressValue(rxResp.getRemoteAddress16() & 0x00FF, 1);
+			   */
           }else
             return false;
         } else {           

@@ -879,8 +879,14 @@ uip_ds6_set_addr_iid(uip_ipaddr_t *ipaddr, uip_lladdr_t * lladdr)
   ipaddr->u8[12] = 0xfe;
   memcpy(ipaddr->u8 + 13, (uint8_t *)lladdr + 3, 3);
   ipaddr->u8[8] ^= 0x02;
+#elif (UIP_LLADDR_LEN == 2)
+	memset(ipaddr->u8 + 8, 0, 3);
+	ipaddr->u8[11] = 0xff;
+	ipaddr->u8[12] = 0xfe;
+	ipaddr->u8[13] = 0;
+	memcpy(ipaddr->u8 + 14, (uint8_t *)lladdr, 2);
 #else
-#error uip-ds6.c cannot build interface address when UIP_LLADDR_LEN is not 6 or 8
+#error uip-ds6.c cannot build interface address when UIP_LLADDR_LEN is not 2, 6 or 8
 #endif
 }
 

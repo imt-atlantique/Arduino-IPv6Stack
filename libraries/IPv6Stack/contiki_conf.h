@@ -55,11 +55,7 @@ typedef unsigned char process_event_t;
 
 #define WITH_UIP6 1
 
-/* Specify a minimum packet size for 6lowpan compression to be
-   enabled. This is needed for ContikiMAC, which needs packets to be
-   larger than a specified size, if no ContikiMAC header should be
-   used. */
-#define SICSLOWPAN_CONF_COMPRESSION_THRESHOLD 0
+
 #define CONTIKIMAC_CONF_WITH_CONTIKIMAC_HEADER 0
 
 #ifndef QUEUEBUF_CONF_NUM
@@ -99,18 +95,25 @@ typedef unsigned char process_event_t;
 
 #ifdef WITH_UIP6
 
-#define RIMEADDR_CONF_SIZE              8
+#define RIMEADDR_CONF_SIZE              2
 
 #define UIP_CONF_LL_802154              1
 #define UIP_CONF_LLH_LEN                0
 
 /*-------------------------------------------------------------------------------------------------------*/
+/* Specify a minimum packet size for 6lowpan compression to be
+ enabled. This is needed for ContikiMAC, which needs packets to be
+ larger than a specified size, if no ContikiMAC header should be
+ used. */
+#define SICSLOWPAN_CONF_COMPRESSION_THRESHOLD 3000
 
-#define UIP_CONF_ROUTER        1 //0 FOR NODES, 1 FOR ROUTERS (BE A ROUTER OR NOT)
+#define UIP_CONF_ROUTER        0 //0 FOR NODES, 1 FOR ROUTERS (BE A ROUTER OR NOT)
 
 #define UIP_CONF_IPV6_RPL      1 //0 WITHOUT RPL, 1 WITH RPL
 
 #define UIP_CONF_ND6_SEND_RA   0 //0 FOR NODES, 1 FOR ROUTERS (SELECT TO SEND ROUTER ADVERTISEMENT OR NOT)
+
+#define UIP_CONF_SEND_RS 	   0 //0 NOT TO SEND ROUTER SOLICITATION MESSAGES, 1 TO SENDING THEM
 
 /*-------------------------------------------------------------------------------------------------------*/
 
@@ -143,7 +146,7 @@ typedef unsigned char process_event_t;
 
 #define SICSLOWPAN_CONF_COMPRESSION_IPV6        0
 #define SICSLOWPAN_CONF_COMPRESSION_HC1         1
-#define SICSLOWPAN_CONF_COMPRESSION_HC01        2
+#define SICSLOWPAN_CONF_COMPRESSION_HC06        2
 #define SICSLOWPAN_CONF_COMPRESSION             SICSLOWPAN_COMPRESSION_HC06
 #ifndef SICSLOWPAN_CONF_FRAG
 #define SICSLOWPAN_CONF_FRAG                    0

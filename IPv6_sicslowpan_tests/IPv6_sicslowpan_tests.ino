@@ -58,7 +58,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define UDP_PORT 5683
+#define UDP_PORT 61616//5683
 
 #define IS_INTERMEDIATE_ROUTER  (UIP_CONF_ROUTER && 0)// FOR INTERMEDIATE ROUTERS: 1, FOR NODES: 0 -> UIP_CONF_ROUTER MUST BE 1
 
@@ -90,7 +90,7 @@ IPv6Address ping_addr_dest;
 
 #if IS_BORDER_ROUTER
   //If we are configured to be a router, this is our prefix. Up to now we hardcode it here. Note: The aaaa::/64 prefix is the only known by the 6loPAN context so it will achieve a better compression.
-  IPv6Address prefix(0xaa, 0xaa, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+  IPv6Address prefix(0xbb, 0xbb, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 #endif
 
 //We use a timer in order to send data if we do not have to respond to a message received.

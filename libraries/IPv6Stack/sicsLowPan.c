@@ -481,7 +481,8 @@ compress_hdr_hc06(rimeaddr_t *rime_destaddr/*, uint8_t* uip_buf_ptr, uip_lladdr_
    * cause an extra byte with [ SCI | DCI ]
    *
    */
-
+	context = NULL;
+	otherContext = NULL;
 
 	/* check if dest context exists (for allocating third byte) */
 	if((context = addr_context_lookup_by_prefix(&(UIP_IP_BUF->destipaddr))) != NULL &&
@@ -1069,6 +1070,8 @@ u8_t (* mac_outputfunc)(uip_lladdr_t *a);
 static void
 send_packet(rimeaddr_t *dest)
 {
+	arduino_debug("DEST:");
+	arduino_debug_lladdr(dest);
   //WE ONLY SEND IT TO THE MAC  
   mac_outputfunc((uip_lladdr_t*)dest);
 }
@@ -1114,7 +1117,11 @@ output(uip_lladdr_t *localdest)
   
   if(uip_len >= COMPRESSION_THRESHOLD) {
     /* Try to compress the headers */
+#if (SICSLOWPAN_COMPRESSION == SICSLOWPAN_COMPRESSION_HC06)
     compress_hdr_hc06(&dest);
+#else
+	 compress_hdr_ipv6(&dest);
+#endif
   } else {
     compress_hdr_ipv6(&dest);
   }
@@ -1203,6 +1210,7 @@ output(uip_lladdr_t *localdest)
     
     /* end: reset global variables  */
     my_tag++;
+	  
     processed_ip_len = 0;
 #else /* SICSLOWPAN_CONF_FRAG */
     PRINTFO("sicslowpan output: Packet too large to be sent without fragmentation support; dropping packet");

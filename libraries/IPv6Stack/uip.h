@@ -104,11 +104,20 @@ typedef struct uip_eth_addr {
 
 
 #if UIP_CONF_LL_802154
-/** \brief 802.15.4 address */
-typedef uip_802154_longaddr uip_lladdr_t;
+
 #define UIP_802154_SHORTADDR_LEN 2
 #define UIP_802154_LONGADDR_LEN  8
+
+#if (RIMEADDR_CONF_SIZE == UIP_802154_SHORTADDR_LEN)
+/** \brief 802.15.4 address */
+typedef uip_802154_shortaddr uip_lladdr_t;
+#define UIP_LLADDR_LEN UIP_802154_SHORTADDR_LEN
+#else
+/** \brief 802.15.4 address */
+typedef uip_802154_longaddr uip_lladdr_t;
 #define UIP_LLADDR_LEN UIP_802154_LONGADDR_LEN
+#endif
+
 #else /*UIP_CONF_LL_802154*/
 #if UIP_CONF_LL_80211
 /** \brief 802.11 address */
@@ -2049,6 +2058,8 @@ CCIF extern uip_lladdr_t uip_lladdr;
  * m type is uiplladdr_t
  */
 #if UIP_CONF_LL_802154
+
+#if (UIP_LLADDR_LEN == UIP_802154_LONGADDR_LEN)
 #define uip_is_addr_mac_addr_based(a, m) \
   ((((a)->u8[8])  == (((m)->addr[0]) ^ 0x02)) &&   \
    (((a)->u8[9])  == (m)->addr[1]) &&            \
@@ -2058,6 +2069,18 @@ CCIF extern uip_lladdr_t uip_lladdr;
    (((a)->u8[13]) == (m)->addr[5]) &&            \
    (((a)->u8[14]) == (m)->addr[6]) &&            \
    (((a)->u8[15]) == (m)->addr[7]))
+#else
+#define uip_is_addr_mac_addr_based(a, m) \
+((((a)->u8[8])  == 0) &&   \
+(((a)->u8[9])  == 0) &&            \
+(((a)->u8[10]) == 0) &&            \
+(((a)->u8[11]) == 0xff) &&            \
+(((a)->u8[12]) == 0xfe) &&            \
+(((a)->u8[13]) == 0) &&            \
+(((a)->u8[14]) == (m)->addr[0]) &&            \
+(((a)->u8[15]) == (m)->addr[1]))
+#endif
+
 #else
 
 #define uip_is_addr_mac_addr_based(a, m) \

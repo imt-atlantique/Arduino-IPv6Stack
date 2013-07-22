@@ -505,9 +505,11 @@ tcpip_ipv6_output(void)
 #else
           PRINTF("tcpip_ipv6_output: Destination off-link but no route");
 /*---ADDED ALE (If we do not have a route, send router solicitation)---*/
-#if !UIP_CONF_ROUTER          
+#if !UIP_CONF_ROUTER 
+#if UIP_CONF_SEND_RS
           uip_ds6_send_rs();
           tcpip_ipv6_output();
+#endif
 #endif /*UIP_CONF_ROUTER*/
 /*---ADDED ALE END---*/
 #endif

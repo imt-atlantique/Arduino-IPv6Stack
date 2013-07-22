@@ -57,9 +57,8 @@
 
 #include "contiki_conf.h"
 
-
 typedef union {
-  unsigned char u8[8];
+  unsigned char u8[RIMEADDR_CONF_SIZE];
 } rimeaddr_t;
 
 

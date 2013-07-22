@@ -46,7 +46,12 @@
 #include "rimeaddr.h"
 
 rimeaddr_t rimeaddr_node_addr;
+
+#if (UIP_LLADDR_LEN == UIP_802154_LONGADDR_LEN)
 const rimeaddr_t rimeaddr_null = { { 0, 0, 0, 0, 0, 0, 0, 0 } };
+#else
+const rimeaddr_t rimeaddr_null = { { 0, 0} };
+#endif
 
 const rimeaddr_t rimeaddr_broadcast = { { 0xFF, 0xFF } };
 

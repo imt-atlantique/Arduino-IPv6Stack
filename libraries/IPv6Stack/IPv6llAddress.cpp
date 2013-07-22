@@ -42,6 +42,7 @@ extern "C"{
   #include "rimeaddr.h"
 }
 
+#if (UIP_LLADDR_LEN == UIP_802154_LONGADDR_LEN)
 IPv6llAddress::IPv6llAddress(uint8_t addr1, uint8_t addr2, uint8_t addr3, uint8_t addr4, uint8_t addr5, uint8_t addr6, uint8_t addr7, uint8_t addr8){
   address.addr[0] = addr1;
   address.addr[1] = addr2;
@@ -52,16 +53,17 @@ IPv6llAddress::IPv6llAddress(uint8_t addr1, uint8_t addr2, uint8_t addr3, uint8_
   address.addr[6] = addr7;
   address.addr[7] = addr8;
 }
+#else
+IPv6llAddress::IPv6llAddress(uint8_t addr1, uint8_t addr2){
+	address.addr[0] = addr1;
+	address.addr[1] = addr2;
+}
+#endif
 
 IPv6llAddress::IPv6llAddress(){
-  address.addr[0] = 0;
-  address.addr[1] = 0;
-  address.addr[2] = 0;
-  address.addr[3] = 0;
-  address.addr[4] = 0;
-  address.addr[5] = 0;
-  address.addr[6] = 0;
-  address.addr[7] = 0;
+	for (int i=0; i<UIP_LLADDR_LEN; ++i){
+		address.addr[i] = 0;
+	}
 }
 
 void IPv6llAddress::print(){

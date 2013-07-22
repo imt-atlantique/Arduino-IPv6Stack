@@ -95,6 +95,8 @@ void IPv6Stack::initIpStack() {
     for (addr_pos = 0; addr_pos<UIP_LLADDR_LEN; addr_pos++) 
         uip_lladdr.addr[addr_pos] = IPv6Stack::mac->getMacAddress().getAddressValue(addr_pos);
     
+	arduino_debug_lladdr(&uip_lladdr);
+	
     sicslowpan_init(IPv6Stack::mac_output);
     
     tcpip_init();
