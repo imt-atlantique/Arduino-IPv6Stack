@@ -268,13 +268,6 @@ void setup(){
 void loop(){
   //Always need to poll timers in order to make the IPv6 Stack work
   IPv6Stack::pollTimers();  
-  //If we are not a router (any kind), we also send messages
-#if !UIP_CONF_ROUTER
-  if (send_timer.expired()){
-      send_timer.reset();
-
-  }
-#endif
   //We always check if we got anything. If we did, process that with the IPv6 Stack
   if (IPv6Stack::receivePacket()){
 #if !IS_BORDER_ROUTER

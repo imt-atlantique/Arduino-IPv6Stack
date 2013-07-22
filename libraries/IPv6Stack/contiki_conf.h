@@ -105,7 +105,7 @@ typedef unsigned char process_event_t;
  enabled. This is needed for ContikiMAC, which needs packets to be
  larger than a specified size, if no ContikiMAC header should be
  used. */
-#define SICSLOWPAN_CONF_COMPRESSION_THRESHOLD 3000
+#define SICSLOWPAN_CONF_COMPRESSION_THRESHOLD 0 //3000
 
 #define UIP_CONF_ROUTER        0 //0 FOR NODES, 1 FOR ROUTERS (BE A ROUTER OR NOT)
 

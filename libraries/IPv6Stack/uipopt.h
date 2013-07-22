@@ -679,7 +679,7 @@ void uip_log(char *msg);
  */
 /** @} */
 
-#define RPL_CONF_DAO_ACK 1 //ADDED ALE
+#define RPL_CONF_DAO_ACK 0 //ADDED ALE
 
 #endif /* __UIPOPT_H__ */
 /** @} */

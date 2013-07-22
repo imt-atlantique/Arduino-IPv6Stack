@@ -403,13 +403,15 @@ eventhandler(int ev, void *data)
           tcpip_ipv6_output();
         }
 #endif /* UIP_CONF_IPV6_REASSEMBLY */
-#if !UIP_CONF_ROUTER	    
+#if !UIP_CONF_ROUTER
+#if UIP_CONF_SEND_RS
         if(data == &uip_ds6_timer_rs &&
            etimer_expired(&uip_ds6_timer_rs)){
           uip_ds6_send_rs();
           PRINTF("ABOUT TO SEND RS");
           tcpip_ipv6_output();
         }
+#endif
 #endif /* !UIP_CONF_ROUTER */
         if(data == &uip_ds6_timer_periodic &&
            etimer_expired(&uip_ds6_timer_periodic)){
