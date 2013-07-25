@@ -71,3 +71,39 @@ IPv6Address& IPv6Address::operator=(IPv6Address const &addr){
 void IPv6Address::setAddress(uint16_t addr1, uint16_t addr2, uint16_t addr3, uint16_t addr4, uint16_t addr5, uint16_t addr6, uint16_t addr7, uint16_t addr8){
 	uip_ip6addr(&address, addr1,addr2,addr3,addr4,addr5,addr6,addr7,addr8);
 }
+
+void IPv6Address::setPrefix(uint8_t addr0, uint8_t addr1, uint8_t addr2, uint8_t addr3, uint8_t addr4, uint8_t addr5, uint8_t addr6, uint8_t addr7){
+	address.u8[0] = addr0;
+	address.u8[1] = addr1;
+	address.u8[2] = addr2;
+	address.u8[3] = addr3;
+	address.u8[4] = addr4;
+	address.u8[5] = addr5;
+	address.u8[6] = addr6;
+	address.u8[7] = addr7;
+}
+
+void IPv6Address::setLinkLocalPrefix(){
+	uip_create_linklocal_prefix(&address);
+}
+#if (UIP_LLADDR_LEN == UIP_802154_LONGADDR_LEN)
+void IPv6Address::setIID(uint8_t addr0, uint8_t addr1, uint8_t addr2, uint8_t addr3, uint8_t addr4, uint8_t addr5, uint8_t addr6, uint8_t addr7){
+	uip_lladdr_t lladdr;
+	lladdr.addr[0] = addr0;
+	lladdr.addr[1] = addr1;
+	lladdr.addr[2] = addr2;
+	lladdr.addr[3] = addr3;
+	lladdr.addr[4] = addr4;
+	lladdr.addr[5] = addr5;
+	lladdr.addr[6] = addr6;
+	lladdr.addr[7] = addr7;
+	uip_ds6_set_addr_iid(&address, &lladdr);
+}
+#else
+void IPv6Address::setIID(uint8_t addr0, uint8_t addr1){
+	uip_lladdr_t lladdr;
+	lladdr.addr[0] = addr0;
+	lladdr.addr[1] = addr1;
+	uip_ds6_set_addr_iid(&address, &lladdr);
+}
+#endif

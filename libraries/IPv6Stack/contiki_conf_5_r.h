@@ -99,9 +99,9 @@ typedef unsigned char process_event_t;
 #define UIP_CONF_LLH_LEN                0
 
 /*-------------------------------------------------------------------------------------------------------*/
-#define UDP_PORT 5683
+#define UDP_PORT 61616
 
-#define TEST_PREFIX		0xaa,0xaa,0,0,0,0,0,0
+#define TEST_PREFIX		0xbb,0xbb,0,0,0,0,0,0
 
 #define RIMEADDR_CONF_SIZE              8 //2
 
@@ -109,9 +109,9 @@ typedef unsigned char process_event_t;
  enabled. This is needed for ContikiMAC, which needs packets to be
  larger than a specified size, if no ContikiMAC header should be
  used. */
-#define SICSLOWPAN_CONF_COMPRESSION_THRESHOLD 5000 //0
+#define SICSLOWPAN_CONF_COMPRESSION_THRESHOLD 0 //5000
 
-#define UIP_CONF_ROUTER        0 //0 FOR NODES, 1 FOR ROUTERS (BE A ROUTER OR NOT)
+#define UIP_CONF_ROUTER        1 //0 FOR NODES, 1 FOR ROUTERS (BE A ROUTER OR NOT)
 
 #define UIP_CONF_IPV6_RPL      1 //0 WITHOUT RPL, 1 WITH RPL
 

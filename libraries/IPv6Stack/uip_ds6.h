@@ -132,6 +132,7 @@
 #define  NBR_STALE 2
 #define  NBR_DELAY 3
 #define  NBR_PROBE 4
+#define  NBR_TEST_ALWAYS_REACHABLE_STATE 5 //ADDED ALE: we do not test NUD for this state
 
 /** \brief Possible states for the an address  (RFC 4862) */
 #define ADDR_TENTATIVE 0

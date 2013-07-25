@@ -53,7 +53,11 @@ class XBeeMACLayer: public MACLayer{
       int getNumberOfTransmissions();
       
     public:      
-      XBeeMACLayer();
+#if (UIP_LLADDR_LEN == UIP_802154_LONGADDR_LEN)
+	XBeeMACLayer();
+#else
+	XBeeMACLayer(uint8_t addr0, uint8_t addr1);
+#endif
       bool init();
       MACTransmissionStatus send(const IPv6llAddress& lladdr_dest, uint8_t* data, uint16_t length, int &number_transmissions);
       bool receive(IPv6llAddress& lladdr_src, IPv6llAddress& lladdr_dest, uint8_t* data, uint16_t& length);

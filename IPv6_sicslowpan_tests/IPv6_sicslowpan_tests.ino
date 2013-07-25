@@ -52,17 +52,23 @@
    In case the device is an intermediate router, it will not send broadcast messages but it will answer to received messages (only if it has already got a prefix)
    In case the device is a border router (root of the DoDAG), it will never send messages or answer to them, but it sets a hardcoded prefix used for the network.   
  ---------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-
 #include <IPv6Stack.h>
 #include <XBeeMACLayer.h>
 #include <string.h>
 #include <stdlib.h>
 
-#define UDP_PORT 61616//5683
+#if (UIP_LLADDR_LEN == UIP_802154_LONGADDR_LEN)
+#define EUT1    0,0x13,0xa2,0,0x40,0x7b,0x2f,0xbd
+#define EUT2    0,0x13,0xa2,0,0x40,0x71,0x76,0xb1
+#else
+#define EUT1	0,0x7
+#define EUT2	0,0x2
 
-#define IS_INTERMEDIATE_ROUTER  (UIP_CONF_ROUTER && 0)// FOR INTERMEDIATE ROUTERS: 1, FOR NODES: 0 -> UIP_CONF_ROUTER MUST BE 1
+//THIS IS THE 16 BIT ADDRESS FOR THIS NODE
+#define EUT     EUT1
 
-#define IS_BORDER_ROUTER (UIP_CONF_ROUTER && !IS_INTERMEDIATE_ROUTER)
+#endif
+
 
 enum CommandType{
   IP_PING,
@@ -80,7 +86,11 @@ int mem(){
 }
 
 //We need a specific object to implement the MACLayer interface (the virtual methods). In this case we use XBee but could be anyone capable of implementing that interface
+#if (UIP_LLADDR_LEN == UIP_802154_LONGADDR_LEN)
 XBeeMACLayer macLayer;
+#else
+XBeeMACLayer macLayer(EUT);
+#endif
 
 //This will be the destination IP address
 IPv6Address addr_dest;
@@ -88,10 +98,8 @@ IPv6Address addr_dest;
 //This will be the ping destination IP address
 IPv6Address ping_addr_dest;
 
-#if IS_BORDER_ROUTER
-  //If we are configured to be a router, this is our prefix. Up to now we hardcode it here. Note: The aaaa::/64 prefix is the only known by the 6loPAN context so it will achieve a better compression.
-  IPv6Address prefix(0xbb, 0xbb, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-#endif
+//If we are configured to be a router, this is our prefix. Up to now we hardcode it here. Note: The aaaa::/64 prefix is the only known by the 6loPAN context so it will achieve a better compression.
+IPv6Address prefix(TEST_PREFIX, 0, 0, 0, 0, 0, 0, 0, 0);
 
 //We use a timer in order to send data if we do not have to respond to a message received.
 IPv6Timer send_timer;
@@ -108,7 +116,7 @@ u16_t addr[8];
 char coap_ping[4] = {0x40, 0x01, 0xbe, 0xbe};
 
 void udp_callback(char *data, int datalen, int sender_port, IPv6Address &sender_addr){
-  //take the message that should have the format: VERSION (2 bits) | TYPE (2 bits) | OC (4 bits) | CODE (8 bits) | MID (16 bits)
+  //take the message that should have the format: 
   //we put the VERSION to 1, TYPE to 3, the OC to 0 and the code to 0. We leave the same MID
   data[0] = 0x70;
   data[1] = 0;
@@ -230,8 +238,32 @@ void establishContact() {
   }
 }
 
+IPv6Address nbr_ipaddr1;
+
+IPv6Address nbr_ipaddr2;
+
+IPv6Address nbr_globa_ipaddr1;
+
+IPv6Address nbr_globa_ipaddr2;
+
 
 void setup(){  
+  nbr_ipaddr1.setLinkLocalPrefix();
+  nbr_ipaddr1.setIID(EUT1);
+  IPv6llAddress nbr_lladdr1(EUT1);
+  
+  nbr_ipaddr2.setLinkLocalPrefix();
+  nbr_ipaddr2.setIID(EUT2);
+  IPv6llAddress nbr_lladdr2(EUT2);
+  
+  nbr_globa_ipaddr1.setPrefix(TEST_PREFIX);
+  nbr_globa_ipaddr1.setIID(EUT1);
+  IPv6llAddress nbr_globa_lladdr1(EUT1);
+  
+  nbr_globa_ipaddr2.setPrefix(TEST_PREFIX);
+  nbr_globa_ipaddr2.setIID(EUT2);
+  IPv6llAddress nbr_globa_lladdr2(EUT2);
+  
   SERIAL.begin(9600);
   delay(1000);
   //establishContact();
@@ -256,13 +288,25 @@ void setup(){
   SERIAL.println("UDP INITIALIZED");
   delay(100);
   
-  //If Border Router, set prefix. If not, set a timer to send data
-  #if IS_BORDER_ROUTER      //This line is added to specify our prefix    
-      IPv6Stack::setPrefix(prefix, 64); 
-  #endif /*IS_BORDER_ROUTER*/
+  //This line is added to specify our prefix    
+  IPv6Stack::setPrefix(prefix, 64); 
   
   SERIAL.println("SETUP FINISHED");
   delay(100);
+  
+  //Add FE80:: 
+  IPv6Stack::addNeighbor(nbr_ipaddr1, nbr_lladdr1);
+  IPv6Stack::addNeighbor(nbr_ipaddr2, nbr_lladdr2);
+  
+#if UIP_CONF_ROUTER
+  //Add PREFIX::
+  IPv6Stack::addNeighbor(nbr_global_ipaddr1, nbr_lladdr1);
+  IPv6Stack::addNeighbor(nbr_global_ipaddr2, nbr_lladdr2);
+#else
+  //Add default router if we are not a router
+  IPv6Stack::addDefaultRouter(nbr_ipaddr1, nbr_lladdr1);
+  IPv6Stack::addDefaultRouter(nbr_ipaddr2, nbr_lladdr2);
+#endif
 }
 
 void loop(){
@@ -270,7 +314,7 @@ void loop(){
   IPv6Stack::pollTimers();  
   //We always check if we got anything. If we did, process that with the IPv6 Stack
   if (IPv6Stack::receivePacket()){
-#if !IS_BORDER_ROUTER
+#if !UIP_CONF_ROUTER
       //If we are not configured as border router, check if udp data is available and run the callback with it
       if (IPv6Stack::udpDataAvailable()){
         udp_data_length = IPv6Stack::getUdpDataLength();

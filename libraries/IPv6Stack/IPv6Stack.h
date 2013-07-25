@@ -108,6 +108,10 @@ class IPv6Stack
     static void getUdpSenderIpAddress(IPv6Address &address);
 	//Sends a PING (ICMPv6 Echo request) message to the specified address
 	static void ping(IPv6Address &destination, uint8_t datalength, uint8_t hop_limit = 0);
+	
+	static void addNeighbor(IPv6Address &nbr_address, IPv6llAddress &nbr_lladdress);
+	
+	static void addDefaultRouter(IPv6Address &router_address, IPv6llAddress &nbr_lladdress);
 };	
 
 		

@@ -103,13 +103,13 @@ typedef unsigned char process_event_t;
 
 #define TEST_PREFIX		0xaa,0xaa,0,0,0,0,0,0
 
-#define RIMEADDR_CONF_SIZE              8 //2
+#define RIMEADDR_CONF_SIZE              2 //2
 
 /* Specify a minimum packet size for 6lowpan compression to be
  enabled. This is needed for ContikiMAC, which needs packets to be
  larger than a specified size, if no ContikiMAC header should be
  used. */
-#define SICSLOWPAN_CONF_COMPRESSION_THRESHOLD 5000 //0
+#define SICSLOWPAN_CONF_COMPRESSION_THRESHOLD 0 //5000
 
 #define UIP_CONF_ROUTER        0 //0 FOR NODES, 1 FOR ROUTERS (BE A ROUTER OR NOT)
 

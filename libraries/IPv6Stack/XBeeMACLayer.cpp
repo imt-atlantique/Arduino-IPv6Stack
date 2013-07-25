@@ -40,11 +40,11 @@
 #define DEBUG DEBUG_NONE
 #include "uip_debug.h"
 
-XBeeMACLayer::XBeeMACLayer(){
-}
 
 // my (16 bits address)
 uint8_t myCmd[] = {'M','Y'};
+// 16 bits address values
+uint8_t myShortAddress[2]; //if we configure my short address to 0xFFFF, we use 64 bit mac addresses 
 // serial high
 uint8_t shCmd[] = {'S','H'};
 // serial low
@@ -57,6 +57,21 @@ uint8_t mac_position;
 AtCommandRequest atRequest = AtCommandRequest(shCmd);
 
 AtCommandResponse atResponse = AtCommandResponse();
+
+
+#if (UIP_LLADDR_LEN == UIP_802154_LONGADDR_LEN)
+XBeeMACLayer::XBeeMACLayer(){
+	myShortAddress[0] = 0xFF;
+	myShortAddress[1] = 0XFF;
+}
+#else
+XBeeMACLayer::XBeeMACLayer(uint8_t addr0, uint8_t addr1){
+	my_mac.setAddressValue(addr0, 0);
+	my_mac.setAddressValue(addr1, 1);
+	myShortAddress[0] = addr0;
+	myShortAddress[1] = addr1;
+}
+#endif
 
 #define AT_RESPONSE_MAX_ATTEMPTS 5
 #define AT_REQUEST_MAX_ATTEMPTS 20
@@ -105,12 +120,17 @@ bool XBeeMACLayer::sendAtCommand() {
           xbee.getResponse().getAtCommandResponse(atResponse);
     
           if (atResponse.isOk()) {
-            if (atRequest.getCommand() == shCmd || atRequest.getCommand() == slCmd || atRequest.getCommand() == myCmd){
+            if (atRequest.getCommand() == shCmd || atRequest.getCommand() == slCmd){
               return getResponseMAC();
             }else{
               if (atRequest.getCommand() == ecCmd){
                  return getResponseCCAFailure();
-              }
+              }else {
+				  if (atRequest.getCommand() == myCmd) {
+					  return true;
+				  }
+			  }
+
             }
           } 
           else {
@@ -142,12 +162,7 @@ bool XBeeMACLayer::init(){
         
     mac_position = 0; 
 	
-	if (UIP_LLADDR_LEN == UIP_802154_SHORTADDR_LEN){
-		// set command to MY
-		atRequest.setCommand(myCmd);
-		if (!sendAtCommand())
-			return false; 
-	}else{
+#if (UIP_LLADDR_LEN == UIP_802154_LONGADDR_LEN)
 		// set command to SH
 		atRequest.setCommand(shCmd);
 		if (!sendAtCommand())
@@ -156,7 +171,15 @@ bool XBeeMACLayer::init(){
 		atRequest.setCommand(slCmd);  
 		if (!sendAtCommand())
 			return false; 
-	}
+#endif
+	// set command to MY
+	atRequest.setCommand(myCmd);
+	atRequest.setCommandValue(myShortAddress);
+	atRequest.setCommandValueLength(2);
+	if (!sendAtCommand())
+		return false;
+	
+	atRequest.clearCommandValue();
     return true;
 }
 

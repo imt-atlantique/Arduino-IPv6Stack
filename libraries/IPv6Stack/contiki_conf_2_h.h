@@ -99,11 +99,11 @@ typedef unsigned char process_event_t;
 #define UIP_CONF_LLH_LEN                0
 
 /*-------------------------------------------------------------------------------------------------------*/
-#define UDP_PORT 5683
+#define UDP_PORT 61616
 
 #define TEST_PREFIX		0xaa,0xaa,0,0,0,0,0,0
 
-#define RIMEADDR_CONF_SIZE              8 //2
+#define RIMEADDR_CONF_SIZE              2 //8
 
 /* Specify a minimum packet size for 6lowpan compression to be
  enabled. This is needed for ContikiMAC, which needs packets to be

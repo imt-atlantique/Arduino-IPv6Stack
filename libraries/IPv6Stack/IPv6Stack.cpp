@@ -160,25 +160,28 @@ void IPv6Stack::addAddress(IPv6Address &address){
   uip_ds6_addr_add(&address.address, 0, ADDR_AUTOCONF);
 }
 
-#if UIP_CONF_ROUTER
 void IPv6Stack::setPrefix(IPv6Address &prefix, uint8_t prefix_length)
 {
 	uip_ipaddr_t ipaddr;
 	memcpy(&ipaddr, &prefix.address, 16);
 	uip_ds6_set_addr_iid(&ipaddr, &uip_lladdr);
     #if !UIP_CONF_IPV6_RPL
+#if UIP_CONF_ROUTER
       uip_ds6_addr_add(&ipaddr, 0, ADDR_AUTOCONF);
       uip_ds6_prefix_add(&prefix.address, prefix_length, 1, UIP_ND6_RA_FLAG_AUTONOMOUS, UIP_ND6_INFINITE_LIFETIME, 0);  
-    #else /* UIP_CONF_IPV6_RPL */
+#else
+	uip_ds6_addr_add(&ipaddr, 0, ADDR_AUTOCONF);
+	uip_ds6_prefix_add(&prefix.address, prefix_length, UIP_ND6_INFINITE_LIFETIME);
+#endif
+	#else /* UIP_CONF_IPV6_RPL */
 	  uip_ds6_addr_add(&ipaddr, 0, ADDR_MANUAL);
 	  uip_ds6_set_addr_iid(&prefix.address, &uip_lladdr);
       rpl_dag_t *dag;
       rpl_set_root((uip_ip6addr_t *)&prefix.address);
       dag = rpl_get_dag(RPL_ANY_INSTANCE);
       rpl_set_prefix(dag, &prefix.address, prefix_length);
-    #endif /* UIP_CONF_IPV6_RPL */   
+    #endif /* UIP_CONF_IPV6_RPL */
 }
-#endif
 
 bool IPv6Stack::getGlobalPreferredAddress(IPv6Address& address){
   uip_ds6_addr_t * result = uip_ds6_get_global(ADDR_PREFERRED);
@@ -215,4 +218,16 @@ void IPv6Stack::getUdpSenderIpAddress(IPv6Address &address){
 
 void IPv6Stack::ping(IPv6Address &dest, uint8_t datalength, uint8_t hop_limit){
 	uip_icmp6_echo_request_output(&dest.address, datalength, hop_limit);
+}
+
+void IPv6Stack::addNeighbor(IPv6Address &nbr_address, IPv6llAddress &nbr_lladdress){
+	if (!uip_ds6_is_my_addr(&nbr_address.address) && !uip_ds6_nbr_lookup(&nbr_address.address))
+		uip_ds6_nbr_add(&nbr_address.address, &nbr_lladdress.address, 0, NBR_TEST_ALWAYS_REACHABLE_STATE);
+}
+
+void IPv6Stack::addDefaultRouter(IPv6Address &router_address, IPv6llAddress &nbr_lladdress){
+	if (!uip_ds6_is_my_addr(&router_address.address) && !uip_ds6_nbr_lookup(&router_address.address)){
+		uip_ds6_nbr_add(&router_address.address, &nbr_lladdress.address, 1, NBR_TEST_ALWAYS_REACHABLE_STATE);
+		uip_ds6_defrt_add(&router_address.address, 0);
+	}
 }
