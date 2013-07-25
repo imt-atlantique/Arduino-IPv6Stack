@@ -1070,8 +1070,6 @@ u8_t (* mac_outputfunc)(uip_lladdr_t *a);
 static void
 send_packet(rimeaddr_t *dest)
 {
-	arduino_debug("DEST:");
-	arduino_debug_lladdr(dest);
   //WE ONLY SEND IT TO THE MAC  
   mac_outputfunc((uip_lladdr_t*)dest);
 }

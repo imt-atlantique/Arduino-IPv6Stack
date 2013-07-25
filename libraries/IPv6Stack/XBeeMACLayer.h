@@ -42,6 +42,9 @@
 #include "XBee.h"
 #include "arduino_debug.h"
 
+#define MACMODE_NO_ACK	1
+#define MACMODE_ACK		2
+
 class XBeeMACLayer: public MACLayer{
     private:
       XBee xbee;
@@ -51,12 +54,15 @@ class XBeeMACLayer: public MACLayer{
       bool getResponseMAC();
       bool getResponseCCAFailure();
       int getNumberOfTransmissions();
+	
+	uint8_t channel;
+	uint8_t macmode;
       
     public:      
 #if (UIP_LLADDR_LEN == UIP_802154_LONGADDR_LEN)
-	XBeeMACLayer();
+	XBeeMACLayer(uint8_t channel, uint16_t panid, uint8_t macmode);
 #else
-	XBeeMACLayer(uint8_t addr0, uint8_t addr1);
+	XBeeMACLayer(uint8_t channel, uint16_t panid, uint8_t macmode, uint8_t addr0, uint8_t addr1);
 #endif
       bool init();
       MACTransmissionStatus send(const IPv6llAddress& lladdr_dest, uint8_t* data, uint16_t length, int &number_transmissions);

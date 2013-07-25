@@ -61,14 +61,19 @@
 #define EUT1    0,0x13,0xa2,0,0x40,0x7b,0x2f,0xbd
 #define EUT2    0,0x13,0xa2,0,0x40,0x71,0x76,0xb1
 #else
-#define EUT1	0,0x7
+#define EUT1	0,0x1
 #define EUT2	0,0x2
 
 //THIS IS THE 16 BIT ADDRESS FOR THIS NODE
-#define EUT     EUT1
+#define EUT     EUT2
 
 #endif
 
+#define TEST_CHANNEL 0xC
+
+#define TEST_PANID  0
+
+#define TEST_MACMODE MACMODE_ACK // MACMODE_NO_ACK
 
 enum CommandType{
   IP_PING,
@@ -87,9 +92,9 @@ int mem(){
 
 //We need a specific object to implement the MACLayer interface (the virtual methods). In this case we use XBee but could be anyone capable of implementing that interface
 #if (UIP_LLADDR_LEN == UIP_802154_LONGADDR_LEN)
-XBeeMACLayer macLayer;
+XBeeMACLayer macLayer(TEST_CHANNEL, TEST_PANID, TEST_MACMODE);
 #else
-XBeeMACLayer macLayer(EUT);
+XBeeMACLayer macLayer(TEST_CHANNEL, TEST_PANID, TEST_MACMODE, EUT);
 #endif
 
 //This will be the destination IP address
@@ -116,13 +121,17 @@ u16_t addr[8];
 char coap_ping[4] = {0x40, 0x01, 0xbe, 0xbe};
 
 void udp_callback(char *data, int datalen, int sender_port, IPv6Address &sender_addr){
-  //take the message that should have the format: 
-  //we put the VERSION to 1, TYPE to 3, the OC to 0 and the code to 0. We leave the same MID
-  data[0] = 0x70;
-  data[1] = 0;
-  //now we send this to the sender. It is only 4 bytes
-  IPv6Stack::udpSend(sender_addr, sender_port, data, 4);
-  delay(50);
+  if (coap_ping[0] == data[0]){
+    SERIAL.println("COAP PING received");
+    //take the message that should have the format: 
+    //we put the VERSION to 1, TYPE to 3, the OC to 0 and the code to 0. We leave the same MID
+    data[0] = 0x70;
+    data[1] = 0;
+    SERIAL.println("Sending RESET message to sender");
+    //now we send this to the sender. It is only 4 bytes
+    IPv6Stack::udpSend(sender_addr, sender_port, data, 4);
+    delay(50);
+  }
 }
 
 char getIpAddress(char* address, u16_t* addr){
@@ -218,6 +227,7 @@ void hostInput()
         }else{
           if (type == COAP_PING){
             if (port != 0){
+              SERIAL.println("Sending COAP PING");
               send_coap_ping(ping_addr_dest, port);
             }else{
                SERIAL.print("Port was not specified or incorrect");
@@ -242,9 +252,9 @@ IPv6Address nbr_ipaddr1;
 
 IPv6Address nbr_ipaddr2;
 
-IPv6Address nbr_globa_ipaddr1;
+IPv6Address nbr_global_ipaddr1;
 
-IPv6Address nbr_globa_ipaddr2;
+IPv6Address nbr_global_ipaddr2;
 
 
 void setup(){  
@@ -256,13 +266,13 @@ void setup(){
   nbr_ipaddr2.setIID(EUT2);
   IPv6llAddress nbr_lladdr2(EUT2);
   
-  nbr_globa_ipaddr1.setPrefix(TEST_PREFIX);
-  nbr_globa_ipaddr1.setIID(EUT1);
-  IPv6llAddress nbr_globa_lladdr1(EUT1);
+  nbr_global_ipaddr1.setPrefix(TEST_PREFIX);
+  nbr_global_ipaddr1.setIID(EUT1);
+  IPv6llAddress nbr_global_lladdr1(EUT1);
   
-  nbr_globa_ipaddr2.setPrefix(TEST_PREFIX);
-  nbr_globa_ipaddr2.setIID(EUT2);
-  IPv6llAddress nbr_globa_lladdr2(EUT2);
+  nbr_global_ipaddr2.setPrefix(TEST_PREFIX);
+  nbr_global_ipaddr2.setIID(EUT2);
+  IPv6llAddress nbr_global_lladdr2(EUT2);
   
   SERIAL.begin(9600);
   delay(1000);
@@ -294,11 +304,12 @@ void setup(){
   SERIAL.println("SETUP FINISHED");
   delay(100);
   
+
+  
+#if UIP_CONF_ROUTER
   //Add FE80:: 
   IPv6Stack::addNeighbor(nbr_ipaddr1, nbr_lladdr1);
   IPv6Stack::addNeighbor(nbr_ipaddr2, nbr_lladdr2);
-  
-#if UIP_CONF_ROUTER
   //Add PREFIX::
   IPv6Stack::addNeighbor(nbr_global_ipaddr1, nbr_lladdr1);
   IPv6Stack::addNeighbor(nbr_global_ipaddr2, nbr_lladdr2);
@@ -321,6 +332,13 @@ void loop(){
         IPv6Stack::getUdpData(udp_data);
         IPv6Stack::getUdpSenderIpAddress(sender_address);
         udp_callback(udp_data, udp_data_length, IPv6Stack::getUdpSenderPort(), sender_address);
+      }
+#else
+      if (IPv6Stack::udpDataAvailable()){
+        IPv6Stack::getUdpData(udp_data);
+        if (udp_data[0] == 0x70 && udp_data[1] == 0 && udp_data[2] == coap_ping[2] && udp_data[3] == coap_ping[3]){//test coap reset + MID
+           SERIAL.println("COAP RESET received");
+        }
       }
 #endif
   }

@@ -40,6 +40,26 @@
 #define DEBUG DEBUG_NONE
 #include "uip_debug.h"
 
+// channel
+uint8_t chCmd[] = {'C','H'};
+// panid
+uint8_t idCmd[] = {'I','D'};
+// panid value
+uint8_t idValue[2];
+// macmode
+uint8_t mmCmd[] = {'M','M'};
+// api mode
+uint8_t apCmd[] = {'A','P'};
+// api mode value
+uint8_t apValue = 2;
+// destination address high
+uint8_t dhCmd[] = {'D','H'};
+// destination address high value
+uint8_t dhValue[] = {0,0};
+// destination address low
+uint8_t dlCmd[] = {'D','L'};
+// destination address low value
+uint8_t dlValue[] = {0xFF,0xFF};
 
 // my (16 bits address)
 uint8_t myCmd[] = {'M','Y'};
@@ -60,12 +80,20 @@ AtCommandResponse atResponse = AtCommandResponse();
 
 
 #if (UIP_LLADDR_LEN == UIP_802154_LONGADDR_LEN)
-XBeeMACLayer::XBeeMACLayer(){
+XBeeMACLayer::XBeeMACLayer(uint8_t channel, uint16_t panid, uint8_t macmode){
+	this->channel = channel;
+	idValue[0] = ((uint8_t*)&panid)[1];
+	idValue[1] = ((uint8_t*)&panid)[0];
+	this->macmode = macmode;
 	myShortAddress[0] = 0xFF;
 	myShortAddress[1] = 0XFF;
 }
 #else
-XBeeMACLayer::XBeeMACLayer(uint8_t addr0, uint8_t addr1){
+XBeeMACLayer::XBeeMACLayer(uint8_t channel, uint16_t panid, uint8_t macmode, uint8_t addr0, uint8_t addr1){
+	this->channel = channel;
+	idValue[0] = ((uint8_t*)&panid)[1];
+	idValue[1] = ((uint8_t*)&panid)[0];
+	this->macmode = macmode;
 	my_mac.setAddressValue(addr0, 0);
 	my_mac.setAddressValue(addr1, 1);
 	myShortAddress[0] = addr0;
@@ -125,10 +153,8 @@ bool XBeeMACLayer::sendAtCommand() {
             }else{
               if (atRequest.getCommand() == ecCmd){
                  return getResponseCCAFailure();
-              }else {
-				  if (atRequest.getCommand() == myCmd) {
-					  return true;
-				  }
+              }else {//all other commands just need to be OK
+				 return true;
 			  }
 
             }
@@ -172,6 +198,54 @@ bool XBeeMACLayer::init(){
 		if (!sendAtCommand())
 			return false; 
 #endif
+	// set command to CH
+	atRequest.setCommand(chCmd);
+	atRequest.setCommandValue(&channel);
+	atRequest.setCommandValueLength(1);
+	if (!sendAtCommand())
+		return false;	
+	atRequest.clearCommandValue();
+	
+	// set command to ID
+	atRequest.setCommand(idCmd);
+	atRequest.setCommandValue(idValue);
+	atRequest.setCommandValueLength(2);
+	if (!sendAtCommand())
+		return false;	
+	atRequest.clearCommandValue();
+	
+	// set command to MM
+	atRequest.setCommand(mmCmd);
+	atRequest.setCommandValue(&macmode);
+	atRequest.setCommandValueLength(1);
+	if (!sendAtCommand())
+		return false;	
+	atRequest.clearCommandValue();
+	
+	// set command to AP
+	atRequest.setCommand(apCmd);
+	atRequest.setCommandValue(&apValue);
+	atRequest.setCommandValueLength(1);
+	if (!sendAtCommand())
+		return false;	
+	atRequest.clearCommandValue();
+	
+	// set command to DH
+	atRequest.setCommand(dhCmd);
+	atRequest.setCommandValue(dhValue);
+	atRequest.setCommandValueLength(2);
+	if (!sendAtCommand())
+		return false;	
+	atRequest.clearCommandValue();
+	
+	// set command to DL
+	atRequest.setCommand(dlCmd);
+	atRequest.setCommandValue(dlValue);
+	atRequest.setCommandValueLength(2);
+	if (!sendAtCommand())
+		return false;	
+	atRequest.clearCommandValue();
+	
 	// set command to MY
 	atRequest.setCommand(myCmd);
 	atRequest.setCommandValue(myShortAddress);
