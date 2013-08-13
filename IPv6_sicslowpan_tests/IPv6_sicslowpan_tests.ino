@@ -2,14 +2,14 @@
   Arduino IPv6 stack example
  
  This sketch connects two Arduino Mega with wireless shield and Xbee
- mounted. This sketch demonstrates use of the IPv6 stack library.
+ mounted. This sketch demonstrates use of the IPv6 stack API for sending ping and coap ping messages and their answers.
  
  Circuit:
  * Arduino Mega 2560
  * Wireless shield w/ Xbee Series 1
  
- created 29 June 2012
- by Alejandro Lampropulos
+ created 1st July 2013
+ by Alejandro Lampropulos (alejandro.lampropulos@telecom-bretagne.eu)
  Telecom Bretagne Rennes, France
  
  Redistribution and use in source and binary forms, with or without
@@ -36,44 +36,49 @@
  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  SUCH DAMAGE.
  
- /*---------------------------------------------------------------------------------------------------------------------------------------------------------------
-   This example test the interoperability of different Arduino Mega + Xbee S1 to send messages and respond them inverted.
-   The example was tested within a scenario of 4 nodes (a root, an intermediate router node, and two leaves):
+ /*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+   This example test the interoperability of different Arduino Mega + Xbee S1 to send messages and respond ping (echo Request) and coap ping messages.
+   The example can be used with two leave nodes or router nodes or one router and one leaf node.
+ 
+   It is necessary to have a USB2Serial Light model for Arduino in order to connect the Serial1 port of the Arduino Mega (TX1 = PIN18 and RX1 = PIN19).
+   This will allow us to send commands to the Arduino in order to interprate them within our test application as well as receiving the debugging output.
+   In order to achieve this, it will be necessary to use either the Arduino IDE's Serial Monitor or another application such as Coolterm, etc.
+   Example:
    
-         O
-        / \
-       O   O
-      /
-     O
+   Once the Serial Monitor is open, we can use the following commands:
    
-   In this case, the start sending multicast messages and respond to received messages with the data inverted. 
-   If they get a prefix from a DIO, they change the prefix of the source ip address of the message received and they send it to that address, inverted.
-   This allows to see the routing of the router nodes.
-   In case the device is an intermediate router, it will not send broadcast messages but it will answer to received messages (only if it has already got a prefix)
-   In case the device is a border router (root of the DoDAG), it will never send messages or answer to them, but it sets a hardcoded prefix used for the network.   
- ---------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+   ping6 FE80:0:0:0:2:12:6d:45:50:e6:65:8d
+   
+   ping6 FE80:0:0:0:0:FF:FE00:1 (if using 16 bit addresses for pingging MAC address 0x0001)
+   
+   coaping aaaa:0:0:0:2:12:6d:45:50:e6:65:8d 5683
+   
+   Note: notice that the IP addresses will vary depending on the MAC address of the XBee module.
+   There is a part of our code where we add the nodes as neighbors. If using RPL this would not be necessary as DIO messages allow nodes to add the sender as a neighbor.
+   If not using RPL, Neighbor discovery process will be attempted before a message can be sent to an unknown node.
+ -----------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 #include <IPv6Stack.h>
 #include <XBeeMACLayer.h>
 #include <string.h>
 #include <stdlib.h>
 
 #if (UIP_LLADDR_LEN == UIP_802154_LONGADDR_LEN)
-#define EUT1    0,0x13,0xa2,0,0x40,0x7b,0x2f,0xbd
-#define EUT2    0,0x13,0xa2,0,0x40,0x71,0x76,0xb1
+#define EUT1    0,0x12,0x6d,0x45,0x50,0xe6,0x65,0x8d //MAC address of one of the nodes in the network
+#define EUT2    0,0x13,0xa2,0,0x40,0x71,0x76,0xb1 //MAC address of one of the nodes in the network
 #else
-#define EUT1	0,0x1
-#define EUT2	0,0x2
+#define EUT1	0,0x1 //16 bit MAC address of one of the nodes in the network (This can be selected by the developer)
+#define EUT2	0,0x2 //16 bit MAC address of one of the nodes in the network (This can be selected by the developer)
 
-//THIS IS THE 16 BIT ADDRESS FOR THIS NODE
-#define EUT     EUT2
+//THIS IS THE 16 BIT ADDRESS FOR THE NODE THAT IS BEING FLASHED WITH THIS CODE. IF FLASHING ANOTHER NODE WITH THE SAME CODE, CHANGE THIS VALUE NOT TO HAVE REPEATED MAC ADDRESSES
+#define EUT     EUT1
 
 #endif
 
-#define TEST_CHANNEL 0xC
+#define TEST_CHANNEL 15 //CHANNEL FOR COMMUNICATION
 
-#define TEST_PANID  0
+#define TEST_PANID  0 //PAN ID
 
-#define TEST_MACMODE MACMODE_ACK // MACMODE_NO_ACK
+#define TEST_MACMODE MACMODE_NO_ACK // MAC MODE FOR XBEE MODULE (COULD ALSO BE: MACMODE_ACK)
 
 enum CommandType{
   IP_PING,
@@ -106,9 +111,6 @@ IPv6Address ping_addr_dest;
 //If we are configured to be a router, this is our prefix. Up to now we hardcode it here. Note: The aaaa::/64 prefix is the only known by the 6loPAN context so it will achieve a better compression.
 IPv6Address prefix(TEST_PREFIX, 0, 0, 0, 0, 0, 0, 0, 0);
 
-//We use a timer in order to send data if we do not have to respond to a message received.
-IPv6Timer send_timer;
-
 char udp_data[50];
 int udp_data_length = 0;
 IPv6Address sender_address;
@@ -118,7 +120,7 @@ uint16_t dest_port;
 char buffer_command[COMMAND_MAX_BYTES];
 u16_t addr[8];
 
-char coap_ping[4] = {0x40, 0x01, 0xbe, 0xbe};
+char coap_ping[4] = {0x40, 0x00, 0xbe, 0xbe};
 
 void udp_callback(char *data, int datalen, int sender_port, IPv6Address &sender_addr){
   if (coap_ping[0] == data[0]){
@@ -130,6 +132,9 @@ void udp_callback(char *data, int datalen, int sender_port, IPv6Address &sender_
     SERIAL.println("Sending RESET message to sender");
     //now we send this to the sender. It is only 4 bytes
     IPv6Stack::udpSend(sender_addr, sender_port, data, 4);
+    delay(50);
+  }else if (data[0] == 0x70 && data[1] == 0 && data[2] == coap_ping[2] && data[3] == coap_ping[3]){//test coap reset + MID
+    SERIAL.println("COAP RESET received");
     delay(50);
   }
 }
@@ -147,11 +152,13 @@ char getIpAddress(char* address, u16_t* addr){
   return 0;
 }
 
+//send a coap ping message
 void send_coap_ping(IPv6Address& ping_addr_dest, u16_t port){
   IPv6Stack::udpSend(ping_addr_dest, port, coap_ping, 4);
   delay(50);
 }
 
+//receives and interprates the input from the host
 void hostInput()
 {
     char* cmd;
@@ -238,26 +245,17 @@ void hostInput()
     }
 }
 
-void establishContact() {
-  while (SERIAL.available() <= 0) {
-    SERIAL.println("0");   // send an initial string
-    delay(300);
-  }
-  while(SERIAL.available()){
-    SERIAL.read();
-  }
-}
+//if not using RPL, neigbors will be added manually so initialize their IP addresses
+#if !UIP_CONF_IPV6_RPL
 
-IPv6Address nbr_ipaddr1;
+  IPv6Address nbr_ipaddr1;
 
-IPv6Address nbr_ipaddr2;
+  IPv6Address nbr_ipaddr2;
 
-IPv6Address nbr_global_ipaddr1;
+  IPv6Address nbr_global_ipaddr1;
 
-IPv6Address nbr_global_ipaddr2;
+  IPv6Address nbr_global_ipaddr2;
 
-
-void setup(){  
   nbr_ipaddr1.setLinkLocalPrefix();
   nbr_ipaddr1.setIID(EUT1);
   IPv6llAddress nbr_lladdr1(EUT1);
@@ -274,9 +272,11 @@ void setup(){
   nbr_global_ipaddr2.setIID(EUT2);
   IPv6llAddress nbr_global_lladdr2(EUT2);
   
+#endif
+
+void setup(){  
   SERIAL.begin(9600);
   delay(1000);
-  //establishContact();
   SERIAL.println();
   SERIAL.print("MEMORY LEFT:");
   SERIAL.println(mem());
@@ -298,26 +298,29 @@ void setup(){
   SERIAL.println("UDP INITIALIZED");
   delay(100);
   
+#if !UIP_CONF_IPV6_RPL
   //This line is added to specify our prefix    
   IPv6Stack::setPrefix(prefix, 64); 
-  
-  SERIAL.println("SETUP FINISHED");
-  delay(100);
-  
-
-  
-#if UIP_CONF_ROUTER
-  //Add FE80:: 
-  IPv6Stack::addNeighbor(nbr_ipaddr1, nbr_lladdr1);
-  IPv6Stack::addNeighbor(nbr_ipaddr2, nbr_lladdr2);
-  //Add PREFIX::
-  IPv6Stack::addNeighbor(nbr_global_ipaddr1, nbr_lladdr1);
-  IPv6Stack::addNeighbor(nbr_global_ipaddr2, nbr_lladdr2);
-#else
-  //Add default router if we are not a router
-  IPv6Stack::addDefaultRouter(nbr_ipaddr1, nbr_lladdr1);
-  IPv6Stack::addDefaultRouter(nbr_ipaddr2, nbr_lladdr2);
+  #if UIP_CONF_ROUTER
+    //Add FE80:: 
+    IPv6Stack::addNeighbor(nbr_ipaddr1, nbr_lladdr1);
+    IPv6Stack::addNeighbor(nbr_ipaddr2, nbr_lladdr2);
+    //Add PREFIX::
+    IPv6Stack::addNeighbor(nbr_global_ipaddr1, nbr_lladdr1);
+    IPv6Stack::addNeighbor(nbr_global_ipaddr2, nbr_lladdr2);
+  #else
+    //Add default router if we are not a router
+    IPv6Stack::addDefaultRouter(nbr_ipaddr1, nbr_lladdr1);
+    IPv6Stack::addDefaultRouter(nbr_ipaddr2, nbr_lladdr2);
+  #endif
+#elif UIP_CONF_ROUTER
+  //If using RPL only the router adds the prefix. Nodes will foind it within DIO messages 
+  IPv6Stack::setPrefix(prefix, 64); 
 #endif
+
+  SERIAL.println("SETUP FINISHED");
+  delay(100);  
+
 }
 
 void loop(){
@@ -325,23 +328,15 @@ void loop(){
   IPv6Stack::pollTimers();  
   //We always check if we got anything. If we did, process that with the IPv6 Stack
   if (IPv6Stack::receivePacket()){
-#if !UIP_CONF_ROUTER
-      //If we are not configured as border router, check if udp data is available and run the callback with it
+      //If we have udp data received, see if it is a COAP message. If it is a coap ping, respond
       if (IPv6Stack::udpDataAvailable()){
         udp_data_length = IPv6Stack::getUdpDataLength();
         IPv6Stack::getUdpData(udp_data);
         IPv6Stack::getUdpSenderIpAddress(sender_address);
         udp_callback(udp_data, udp_data_length, IPv6Stack::getUdpSenderPort(), sender_address);
       }
-#else
-      if (IPv6Stack::udpDataAvailable()){
-        IPv6Stack::getUdpData(udp_data);
-        if (udp_data[0] == 0x70 && udp_data[1] == 0 && udp_data[2] == coap_ping[2] && udp_data[3] == coap_ping[3]){//test coap reset + MID
-           SERIAL.println("COAP RESET received");
-        }
-      }
-#endif
   }
+  //Check for host input to send messages
   hostInput();  
   delay(10);
 }

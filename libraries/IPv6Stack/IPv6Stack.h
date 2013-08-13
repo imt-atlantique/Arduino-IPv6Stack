@@ -108,9 +108,9 @@ class IPv6Stack
     static void getUdpSenderIpAddress(IPv6Address &address);
 	//Sends a PING (ICMPv6 Echo request) message to the specified address
 	static void ping(IPv6Address &destination, uint8_t datalength, uint8_t hop_limit = 0);
-	
+	//Adds the specified neighbor with its IP address and its MAC address, to the neighbor table. If the neighbor was already added or is itself, it does nothing
 	static void addNeighbor(IPv6Address &nbr_address, IPv6llAddress &nbr_lladdress);
-	
+	//Adds the specified node with its IP address and its MAC address as a default router. If the node was already added or is itself, it does nothing
 	static void addDefaultRouter(IPv6Address &router_address, IPv6llAddress &nbr_lladdress);
 };	
 

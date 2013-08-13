@@ -60,8 +60,11 @@ class XBeeMACLayer: public MACLayer{
       
     public:      
 #if (UIP_LLADDR_LEN == UIP_802154_LONGADDR_LEN)
+	//Specify which channel to use, which pan id and the mac mode (MACMODE_NO_ACK or MACMODE_ACK)
 	XBeeMACLayer(uint8_t channel, uint16_t panid, uint8_t macmode);
 #else
+	//Specify which channel to use, which pan id and the mac mode (MACMODE_NO_ACK or MACMODE_ACK).
+	//If using 16 bit addresses, specify the value of the address
 	XBeeMACLayer(uint8_t channel, uint16_t panid, uint8_t macmode, uint8_t addr0, uint8_t addr1);
 #endif
       bool init();

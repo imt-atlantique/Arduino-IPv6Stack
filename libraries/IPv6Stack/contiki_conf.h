@@ -99,25 +99,25 @@ typedef unsigned char process_event_t;
 #define UIP_CONF_LLH_LEN                0
 
 /*-------------------------------------------------------------------------------------------------------*/
-#define UDP_PORT 61616
+#define UDP_PORT 5683 //the port number to listen to
 
-#define TEST_PREFIX		0xbb,0xbb,0,0,0,0,0,0
+#define TEST_PREFIX		0xaa,0xaa,0,0,0,0,0,0 //the prefix used for the node 
 
-#define RIMEADDR_CONF_SIZE              2 //2
+#define RIMEADDR_CONF_SIZE              2 //8 (use this value for long addresses)
 
 /* Specify a minimum packet size for 6lowpan compression to be
  enabled. This is needed for ContikiMAC, which needs packets to be
  larger than a specified size, if no ContikiMAC header should be
  used. */
-#define SICSLOWPAN_CONF_COMPRESSION_THRESHOLD 0 //5000
+#define SICSLOWPAN_CONF_COMPRESSION_THRESHOLD 0 //5000 (use this value for avoiding compression)
 
-#define UIP_CONF_ROUTER        1 //0 FOR NODES, 1 FOR ROUTERS (BE A ROUTER OR NOT)
+#define UIP_CONF_ROUTER        0 //0 FOR NODES, 1 FOR ROUTERS
 
-#define UIP_CONF_IPV6_RPL      0 //0 WITHOUT RPL, 1 WITH RPL
+#define UIP_CONF_IPV6_RPL      1 //0 WITHOUT RPL, 1 WITH RPL
 
-#define UIP_CONF_ND6_SEND_RA   0 //0 FOR NODES, 1 FOR ROUTERS (SELECT TO SEND ROUTER ADVERTISEMENT OR NOT)
+#define UIP_CONF_ND6_SEND_RA   0 //0 FOR NODES, 1 FOR ROUTERS (SELECT TO SEND ROUTER ADVERTISEMENT OR NOT, ONLY FOR ROUTERS)
 
-#define UIP_CONF_SEND_RS 	   0 //0 NOT TO SEND ROUTER SOLICITATION MESSAGES, 1 TO SENDING THEM
+#define UIP_CONF_SEND_RS 	   0 //0 NOT TO SEND ROUTER SOLICITATION MESSAGES, 1 TO SEND THEM (ONLY FOR NODES NOT ROUTERS)
 
 /*-------------------------------------------------------------------------------------------------------*/
 
